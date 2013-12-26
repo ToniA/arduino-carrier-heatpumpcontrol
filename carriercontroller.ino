@@ -449,7 +449,7 @@ void sendCarrier(byte operatingMode, byte fanSpeed, byte temperature)
   static prog_uint8_t temperatures[] PROGMEM = { 0x00, 0x08, 0x04, 0x0c, 0x02, 0x0a, 0x06, 0x0e, 0x01, 0x09, 0x05, 0x0d, 0x03, 0x0b };
   byte checksum = 0;
 
-  sendBuffer[5] = temperatures[(temperature-17)];
+  sendBuffer[5] = pgm_read_byte(&(temperatures[(temperature-17)]));
   sendBuffer[6] = operatingMode | fanSpeed;
 
   // Checksum
