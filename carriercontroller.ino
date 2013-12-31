@@ -38,10 +38,10 @@ struct owbus
 
 // and the array
 owbus owbuses[] = {
-  {owsensors0, DEVICE_DISCONNECTED, "Takka"},    // Fireplace
-  {owsensors1, DEVICE_DISCONNECTED, "ILP imu"},  // Carrier heatpump intake air
-  {owsensors2, DEVICE_DISCONNECTED, "KHH"},      // Utility room
-  {owsensors3, DEVICE_DISCONNECTED, "Ulkoilma"}  // Outdoor
+  {owsensors0, DEVICE_DISCONNECTED, "Takka"},         // Fireplace
+  {owsensors1, DEVICE_DISCONNECTED, "LTO Tulokenno"}, // Ventilation machine
+  {owsensors2, DEVICE_DISCONNECTED, "KHH"},           // Utility room
+  {owsensors3, DEVICE_DISCONNECTED, "Ulkoilma (LTO)"} // Outdoor
 };
 
 
@@ -59,7 +59,7 @@ CarrierHeatpump carrierHeatpump = { 2, 0, 23 };
 
 // The Carrier heatpump instance, and the IRSender instance
 HeatpumpIR *heatpumpIR = new CarrierHeatpumpIR();
-IRSender irSender(54); // IR led on Mega digital pin 54
+IRSender irSender(46); // IR led on Mega digital pin 46
 
 // The number of the displayed sensor
 int displayedSensor = 0;
@@ -92,7 +92,7 @@ void setup()
     lcd.print(owbuses[i].name);
     lcd.setCursor(0, 1);
     lcd.print("laitteita: "); // 'devices'
-    Serial.print(F("Väylässä ")); // 'In bus'
+    Serial.print(F("VÃ¤ylÃ¤ssÃ¤ ")); // 'In bus'
     Serial.print(owbuses[i].name);
     Serial.print(F(" on ")); // 'there is'
     owbuses[i].owbus.begin();
@@ -105,21 +105,21 @@ void setup()
   }
 
 /*
-  Serial.println("Obtaining IP address from DHCP server...");
+Serial.println("Obtaining IP address from DHCP server...");
 
-  // initialize the Ethernet adapter with DHCP
-  if(Ethernet.begin(macAddress) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
-  }
+// initialize the Ethernet adapter with DHCP
+if(Ethernet.begin(macAddress) == 0) {
+Serial.println("Failed to configure Ethernet using DHCP");
+}
 
-  delay(1000); // give the Ethernet shield a second to initialize
+delay(1000); // give the Ethernet shield a second to initialize
 
-  Serial.print("IP address from DHCP server: ");
-  Serial.println(Ethernet.localIP());
+Serial.print("IP address from DHCP server: ");
+Serial.println(Ethernet.localIP());
 */
 
   // The timed calls
-  timer.every(2000, showTemperatures);  // every 2 seconds
+  timer.every(2000, showTemperatures); // every 2 seconds
   timer.every(300000L, controlCarrier); // every 5 minutes
 }
 
@@ -200,30 +200,40 @@ void controlCarrier()
   int utility = owbuses[2].temperature;
 
   // Fireplace is hot, use the FAN mode
-  if (fireplace > 35) {
-    // FAN with FAN 3
+  if (fireplace > 25
+  ) {
+    // FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
-    fanSpeed = FAN_3;
-
-    if (fireplace >= 40 && fireplace < 45) {
+    fanSpeed = FAN_1;
+    if (fireplace >= 26 && fireplace < 27) {
+      fanSpeed = FAN_2;
+    } else if (fireplace >= 28 && fireplace < 29) {
+      fanSpeed = FAN_3;
+    } else if (fireplace >= 29 && fireplace < 30) {
       fanSpeed = FAN_4;
-    } else if ( fireplace >= 45) {
+    } else if ( fireplace >= 31
+    ) {
       fanSpeed = FAN_5;
     }
 
   // Utility room is hot, as the laundry drier has been running
-  } else if (utility > 24 ) {
-    // FAN with FAN 3
+  } else if (utility > 23.5 ) {
+    // FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
-    fanSpeed = FAN_3;
+    fanSpeed = FAN_1;
 
-    if (utility >= 26 && utility < 28) {
+    if (utility >= 24 && utility < 24.5) {
+      fanSpeed = FAN_2;
+    } else if ( utility >= 24.5 && utility < 25) {
+      fanSpeed = FAN_3;
+    } else if ( utility >= 25 && utility < 25.5) {
       fanSpeed = FAN_4;
-    } else if ( utility >= 28 && utility < 29) {
+    } else if ( utility >= 25.5 && utility < 26) {
       fanSpeed = FAN_5;
-    } else if (utility >= 29) {
+
+    } else if (utility >= 26) {
       // COOL with AUTO FAN, +24
       operatingMode = MODE_COOL;
       temperature = 24;
