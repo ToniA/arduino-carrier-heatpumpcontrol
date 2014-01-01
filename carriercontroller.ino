@@ -119,7 +119,8 @@ Serial.println(Ethernet.localIP());
 */
 
   // The timed calls
-  timer.every(2000, showTemperatures); // every 2 seconds
+  timer.every(2000, updateDisplay);  // every 2 seconds
+  timer.every(15000, requestTemperatures);  // every 15 seconds
   timer.every(300000L, controlCarrier); // every 5 minutes
 }
 
@@ -128,17 +129,30 @@ void loop()
   timer.update();
 }
 
+// Request the temperature measurement on all 1-wire buses
+// and schedule an event 750ms later to read the measurements
+void requestTemperatures()
+{
+  for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++) {
+    owbuses[i].owbus.requestTemperatures();
+  }
 
+  timer.after(750, readTemperatures);
+}
 
-void showTemperatures()
+// Read the measured temperatures
+void readTemperatures()
+{
+  for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++) {
+    owbuses[i].temperature = owbuses[i].owbus.getTempCByIndex(0);
+  }
+}
+
+// Update the LCD display
+void updateDisplay()
 {
   // The last display is the 'MODE' display
   if ( displayedSensor < sizeof(owbuses) / sizeof(struct owbus)) {
-    // Measure and display the temperature
-    owbuses[displayedSensor].owbus.requestTemperatures();
-    delay(750);
-    owbuses[displayedSensor].temperature = owbuses[displayedSensor].owbus.getTempCByIndex(0);
-
     // Display the device name and temperature on the LCD
     lcd.clear();
     lcd.print(owbuses[displayedSensor].name);
@@ -181,7 +195,11 @@ void showTemperatures()
 
     lcd.setCursor(10, 1);
     lcd.print("FAN: ");
-    lcd.print(carrierHeatpump.fanSpeed);
+    if (carrierHeatpump.fanSpeed == FAN_AUTO) {
+      lcd.print("A");
+    } else {
+      lcd.print(carrierHeatpump.fanSpeed);
+    }
   }
 }
 
