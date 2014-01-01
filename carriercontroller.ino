@@ -54,8 +54,10 @@ struct CarrierHeatpump
   int temperature;
 };
 
-// Default mode for the heatpump is HEAT, AUTO FAN and 23 degrees
-CarrierHeatpump carrierHeatpump = { 2, 0, 23 };
+// Default mode for the heatpump is HEAT, AUTO FAN and 22 degrees.
+// 22 degrees also means that 5 minutes after startup the command will be
+// sent if outdoor < 15 degrees
+CarrierHeatpump carrierHeatpump = { 2, 0, 22 };
 
 // The Carrier heatpump instance, and the IRSender instance
 HeatpumpIR *heatpumpIR = new CarrierHeatpumpIR();
@@ -119,9 +121,9 @@ Serial.println(Ethernet.localIP());
 */
 
   // The timed calls
-  timer.every(2000, updateDisplay);  // every 2 seconds
-  timer.every(15000, requestTemperatures);  // every 15 seconds
-  timer.every(300000L, controlCarrier); // every 5 minutes
+  timer.every(2000, updateDisplay);        // every 2 seconds
+  timer.every(15000, requestTemperatures); // every 15 seconds
+  timer.every(300000L, controlCarrier);    // every 5 minutes
 }
 
 void loop()
@@ -152,7 +154,8 @@ void readTemperatures()
 void updateDisplay()
 {
   // The last display is the 'MODE' display
-  if ( displayedSensor < sizeof(owbuses) / sizeof(struct owbus)) {
+  if ( displayedSensor < sizeof(owbuses) / sizeof(struct owbus) &&
+       owbuses[displayedSensor].temperature != DEVICE_DISCONNECTED) {
     // Display the device name and temperature on the LCD
     lcd.clear();
     lcd.print(owbuses[displayedSensor].name);
@@ -220,7 +223,7 @@ void controlCarrier()
   // Fireplace is hot, use the FAN mode
   if (fireplace > 25
   ) {
-    // FAN with FAN 1
+    // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
@@ -237,7 +240,7 @@ void controlCarrier()
 
   // Utility room is hot, as the laundry drier has been running
   } else if (utility > 23.5 ) {
-    // FAN with FAN 1
+    // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
