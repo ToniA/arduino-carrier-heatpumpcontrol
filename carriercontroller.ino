@@ -8,7 +8,7 @@
 #include <Timer.h>
 #include <CarrierHeatpumpIR.h> // From HeatpumpIR library, https://github.com/ToniA/arduino-heatpumpir/archive/master.zip
 
-#define FIREPLACE_FAN_PIN 51 // Pin for the fireplace relay
+#define FIREPLACE_FAN_PIN 49 // Pin for the fireplace relay
 
 // Use digital pins 4, 5, 6, 7, 8, 9, 10, and analog pin 0 to interface with the LCD
 // Do not use Pin 10 while this shield is connected
@@ -91,7 +91,8 @@ void setup()
 
   // Fireplace fan relay
   pinMode(FIREPLACE_FAN_PIN, OUTPUT);
-
+  // Default mode for the Fireplace is OFF
+digitalWrite(FIREPLACE_FAN_PIN, HIGH);  // Fireplace fan to OFF state
   // List OneWire devices
 
   for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++)
@@ -212,12 +213,14 @@ void updateDisplay()
   } else {
     // Fireplace mode display
     lcd.clear();
-    lcd.print("Takkapuhallin: ");
+    lcd.print("Takkapuhallin");
 
     if (carrierHeatpump.fireplaceFan) {
+      lcd.setCursor(0, 1);
       lcd.print("ON");
       Serial.println("Fireplace fan: ON");
     } else {
+      lcd.setCursor(0, 1);
       lcd.print("OFF");
       Serial.println("Fireplace fan: OFF");
     }
@@ -242,12 +245,12 @@ void controlCarrier()
 
   // Fireplace fan control
 
-  if (fireplace <= 27) {
-    digitalWrite(FIREPLACE_FAN_PIN, LOW);  // Fireplace fan to OFF state
+  if (fireplace <= 24) {
+    digitalWrite(FIREPLACE_FAN_PIN, HIGH);  // Fireplace fan to OFF state
     Serial.println("Takkapuhallin pois");
     carrierHeatpump.fireplaceFan = false;
-  } else if  (fireplace > 35) {
-    digitalWrite(FIREPLACE_FAN_PIN, HIGH); // Fireplace fan to ON state
+  } else if  (fireplace > 25) {
+    digitalWrite(FIREPLACE_FAN_PIN, LOW); // Fireplace fan to ON state
     Serial.println("Takkapuhallin pÃ¤Ã¤lle");
     carrierHeatpump.fireplaceFan = true;
   }
