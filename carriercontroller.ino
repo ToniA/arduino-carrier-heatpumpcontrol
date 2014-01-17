@@ -8,6 +8,8 @@
 #include <Timer.h>
 #include <CarrierHeatpumpIR.h> // From HeatpumpIR library, https://github.com/ToniA/arduino-heatpumpir/archive/master.zip
 
+#define FIREPLACE_FAN_PIN 51 // Pin for the fireplace relay
+
 // Use digital pins 4, 5, 6, 7, 8, 9, 10, and analog pin 0 to interface with the LCD
 // Do not use Pin 10 while this shield is connected
 LCDKeypad lcd;
@@ -52,12 +54,13 @@ struct CarrierHeatpump
   int operatingMode;
   int fanSpeed;
   int temperature;
+  bool fireplaceFan;
 };
 
 // Default mode for the heatpump is HEAT, AUTO FAN and 22 degrees.
 // 22 degrees also means that 5 minutes after startup the command will be
 // sent if outdoor < 15 degrees
-CarrierHeatpump carrierHeatpump = { 2, 0, 22 };
+CarrierHeatpump carrierHeatpump = { 2, 0, 22, false };
 
 // The Carrier heatpump instance, and the IRSender instance
 HeatpumpIR *heatpumpIR = new CarrierHeatpumpIR();
@@ -76,15 +79,18 @@ Timer timer;
 void setup()
 {
   // Serial initialization
-
   Serial.begin(9600);
   delay(500);
   Serial.println(F("Starting..."));
 
+  // LCD initialization
   lcd.begin(16, 2);
   lcd.clear();
   lcd.print("K\xE1ynnistyy..."); // 'Starting...'
   delay(1000);
+
+  // Fireplace fan relay
+  pinMode(FIREPLACE_FAN_PIN, OUTPUT);
 
   // List OneWire devices
 
@@ -153,7 +159,7 @@ void readTemperatures()
 // Update the LCD display
 void updateDisplay()
 {
-  // The last display is the 'MODE' display
+  // First show the temperature displays
   if ( displayedSensor < sizeof(owbuses) / sizeof(struct owbus) &&
        owbuses[displayedSensor].temperature != DEVICE_DISCONNECTED) {
     // Display the device name and temperature on the LCD
@@ -167,9 +173,8 @@ void updateDisplay()
     Serial.print(F(": "));
     Serial.println(owbuses[displayedSensor].temperature);
     displayedSensor++;
-  } else {
-    displayedSensor = 0;
-
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 1)) {
+    // Mode display
     delay(750);
     Serial.print("MODE: ");
     Serial.println(carrierHeatpump.operatingMode);
@@ -203,6 +208,21 @@ void updateDisplay()
     } else {
       lcd.print(carrierHeatpump.fanSpeed);
     }
+    displayedSensor++;
+  } else {
+    // Fireplace mode display
+    lcd.clear();
+    lcd.print("Takkapuhallin: ");
+
+    if (carrierHeatpump.fireplaceFan) {
+      lcd.print("ON");
+      Serial.println("Fireplace fan: ON");
+    } else {
+      lcd.print("OFF");
+      Serial.println("Fireplace fan: OFF");
+    }
+
+    displayedSensor = 0;
   }
 }
 
@@ -220,9 +240,23 @@ void controlCarrier()
   int fireplace = owbuses[0].temperature;
   int utility = owbuses[2].temperature;
 
+  // Fireplace fan control
+
+  if (fireplace <= 27) {
+    digitalWrite(FIREPLACE_FAN_PIN, LOW);  // Fireplace fan to OFF state
+    Serial.println("Takkapuhallin pois");
+    carrierHeatpump.fireplaceFan = false;
+  } else if  (fireplace > 35) {
+    digitalWrite(FIREPLACE_FAN_PIN, HIGH); // Fireplace fan to ON state
+    Serial.println("Takkapuhallin pÃ¤Ã¤lle");
+    carrierHeatpump.fireplaceFan = true;
+  }
+
+
+  // Heatpump control
+
   // Fireplace is hot, use the FAN mode
-  if (fireplace > 25
-  ) {
+  if (fireplace > 25) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
@@ -233,11 +267,9 @@ void controlCarrier()
       fanSpeed = FAN_3;
     } else if (fireplace >= 29 && fireplace < 30) {
       fanSpeed = FAN_4;
-    } else if ( fireplace >= 31
-    ) {
+    } else if ( fireplace >= 31) {
       fanSpeed = FAN_5;
     }
-
   // Utility room is hot, as the laundry drier has been running
   } else if (utility > 23.5 ) {
     // Default to MODE_FAN with FAN 1
