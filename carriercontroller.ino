@@ -20,15 +20,34 @@ LCDKeypad lcd;
 // * Green: Data
 
 // Four 1-wire buses
+
+
 OneWire ow0(30);
 DallasTemperature owsensors0(&ow0);
-OneWire ow1(32);
+OneWire ow1(38);
 DallasTemperature owsensors1(&ow1);
 OneWire ow2(34);
 DallasTemperature owsensors2(&ow2);
 OneWire ow3(36);
 DallasTemperature owsensors3(&ow3);
-
+OneWire ow4(32);
+DallasTemperature owsensors4(&ow4);
+OneWire ow5(26);
+DallasTemperature owsensors5(&ow5);
+OneWire ow6(28);
+DallasTemperature owsensors6(&ow6);
+OneWire ow7(42);
+DallasTemperature owsensors7(&ow7);
+OneWire ow8(40);
+DallasTemperature owsensors8(&ow8);
+OneWire ow9(44);
+DallasTemperature owsensors9(&ow9);
+OneWire ow10(41);
+DallasTemperature owsensors10(&ow10);
+OneWire ow11(43);
+DallasTemperature owsensors11(&ow11);
+OneWire ow12(24);
+DallasTemperature owsensors12(&ow12);
 // Structure to hold them
 typedef struct owbus owbus;
 struct owbus
@@ -40,10 +59,19 @@ struct owbus
 
 // and the array
 owbus owbuses[] = {
-  {owsensors0, DEVICE_DISCONNECTED, "Takka"},         // Fireplace
-  {owsensors1, DEVICE_DISCONNECTED, "LTO Tulokenno"}, // Ventilation machine
-  {owsensors2, DEVICE_DISCONNECTED, "KHH"},           // Utility room
-  {owsensors3, DEVICE_DISCONNECTED, "Ulkoilma (LTO)"} // Outdoor
+  {owsensors0, DEVICE_DISCONNECTED, "Takka"},                  // Fireplace
+  {owsensors1, DEVICE_DISCONNECTED, "Keitti\xEF"},             // Kitchen
+  {owsensors2, DEVICE_DISCONNECTED, "KHH"},                    // Utility room
+  {owsensors12,DEVICE_DISCONNECTED, "Ulkoilma"},               // Outdoor air
+  {owsensors3, DEVICE_DISCONNECTED, "LTO ulkoilma"},           // Ventilation machine fresh air in
+  {owsensors4, DEVICE_DISCONNECTED, "LTO tulokenno"},          // Ventilation machine fresh air out
+  {owsensors5, DEVICE_DISCONNECTED, "LTO sis\xE1ilma"},        // Ventilation machine waste air in
+  {owsensors6, DEVICE_DISCONNECTED, "LTO poistoilma"},         // Ventilation machine waste air out
+  {owsensors7, DEVICE_DISCONNECTED, "ILP imuilma"},            // Carrier intake air
+  {owsensors8, DEVICE_DISCONNECTED, "ILP puhallusilma"},       // Carrier blowing air
+  {owsensors9, DEVICE_DISCONNECTED, "ILP kuumakaasu"},         // Carrier gas pipe
+  {owsensors10,DEVICE_DISCONNECTED, "Kuumavesivar.yl\xE1"},    // Hot water boiler up
+  {owsensors11,DEVICE_DISCONNECTED, "Kuumavesivar.keski"}      // Hot water boiler middle
 };
 
 
@@ -91,8 +119,10 @@ void setup()
 
   // Fireplace fan relay
   pinMode(FIREPLACE_FAN_PIN, OUTPUT);
+
   // Default mode for the Fireplace is OFF
-digitalWrite(FIREPLACE_FAN_PIN, HIGH);  // Fireplace fan to OFF state
+  digitalWrite(FIREPLACE_FAN_PIN, HIGH);  // Fireplace fan to OFF state
+
   // List OneWire devices
 
   for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++)
@@ -175,8 +205,17 @@ void updateDisplay()
     Serial.println(owbuses[displayedSensor].temperature);
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 1)) {
+    // Heatpump temperature difference
+    Serial.print("ILP lÃ¤mpenemÃ¤: ");
+    Serial.println(owbuses[9].temperature - owbuses[8].temperature);
+
+    lcd.clear();
+    lcd.print("ILP l\xE1mmittää:");
+    lcd.setCursor(0, 1);
+    lcd.print(owbuses[9].temperature - owbuses[8].temperature);
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 2)) {
     // Mode display
-    delay(750);
     Serial.print("MODE: ");
     Serial.println(carrierHeatpump.operatingMode);
     Serial.print("FAN: ");
@@ -264,13 +303,14 @@ void controlCarrier()
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
+
     if (fireplace >= 26 && fireplace < 27) {
       fanSpeed = FAN_2;
-    } else if (fireplace >= 28 && fireplace < 29) {
+    } else if (fireplace >= 27 && fireplace < 29) {
       fanSpeed = FAN_3;
-    } else if (fireplace >= 29 && fireplace < 30) {
+    } else if (fireplace >= 29 && fireplace < 32) {
       fanSpeed = FAN_4;
-    } else if ( fireplace >= 31) {
+    } else if ( fireplace >= 32) {
       fanSpeed = FAN_5;
     }
   // Utility room is hot, as the laundry drier has been running
