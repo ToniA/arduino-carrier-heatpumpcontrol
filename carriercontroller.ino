@@ -210,7 +210,7 @@ void updateDisplay()
     Serial.println(owbuses[9].temperature - owbuses[8].temperature);
 
     lcd.clear();
-    lcd.print("ILP l\xE1mmittää:");
+    lcd.print("ILP l\xE1mmitt\xE1\xE1:");
     lcd.setCursor(0, 1);
     lcd.print(owbuses[9].temperature - owbuses[8].temperature);
     displayedSensor++;
