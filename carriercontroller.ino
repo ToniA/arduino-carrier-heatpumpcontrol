@@ -38,13 +38,13 @@ OneWire ow6(28);
 DallasTemperature owsensors6(&ow6);
 OneWire ow7(42);
 DallasTemperature owsensors7(&ow7);
-OneWire ow8(40);
+OneWire ow8(44);
 DallasTemperature owsensors8(&ow8);
-OneWire ow9(44);
+OneWire ow9(40);
 DallasTemperature owsensors9(&ow9);
-OneWire ow10(41);
+OneWire ow10(43);
 DallasTemperature owsensors10(&ow10);
-OneWire ow11(43);
+OneWire ow11(41);
 DallasTemperature owsensors11(&ow11);
 OneWire ow12(24);
 DallasTemperature owsensors12(&ow12);
@@ -69,9 +69,9 @@ owbus owbuses[] = {
   {owsensors6, DEVICE_DISCONNECTED, "LTO poistoilma"},         // Ventilation machine waste air out
   {owsensors7, DEVICE_DISCONNECTED, "ILP imuilma"},            // Carrier intake air
   {owsensors8, DEVICE_DISCONNECTED, "ILP puhallusilma"},       // Carrier blowing air
-  {owsensors9, DEVICE_DISCONNECTED, "ILP kuumakaasu"},         // Carrier gas pipe
-  {owsensors10,DEVICE_DISCONNECTED, "Kuumavesivar.yl\xE1"},    // Hot water boiler up
-  {owsensors11,DEVICE_DISCONNECTED, "Kuumavesivar.keski"}      // Hot water boiler middle
+  {owsensors9, DEVICE_DISCONNECTED, "ILP kuumakaasu"},         // Carrier hot gas pipe
+  {owsensors10,DEVICE_DISCONNECTED, "Kuumavesivar.keski"},     // Hot water boiler middle
+  {owsensors11,DEVICE_DISCONNECTED, "Kuumavesivar.yl\xE1"}     // Hot water boiler up
 };
 
 
@@ -210,9 +210,20 @@ void updateDisplay()
     Serial.println(owbuses[9].temperature - owbuses[8].temperature);
 
     lcd.clear();
-    lcd.print("ILP l\xE1mmitt\xE1\xE1:");
-    lcd.setCursor(0, 1);
-    lcd.print(owbuses[9].temperature - owbuses[8].temperature);
+    if (carrierHeatpump.operatingMode == 2)
+    {
+      lcd.print("ILP l\xE1mmitt\xE1\xE1:");
+      lcd.setCursor(0, 1);
+      lcd.print(owbuses[9].temperature - owbuses[8].temperature);
+    } else if (carrierHeatpump.operatingMode == 1) {
+      lcd.print("ILP j\xE1\xE1hdytt\xE1\xE1:");
+      lcd.setCursor(0, 1);
+      lcd.print(owbuses[8].temperature - owbuses[9].temperature);
+    } else {
+      lcd.print("ILP puhaltaa:");
+      lcd.setCursor(0, 1);
+      lcd.print(owbuses[9].temperature);
+    }
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 2)) {
     // Mode display
@@ -281,6 +292,7 @@ void controlCarrier()
   int outdoor = owbuses[3].temperature;
   int fireplace = owbuses[0].temperature;
   int utility = owbuses[2].temperature;
+  int kitchen = owbuses[1].temperature;
 
   // Fireplace fan control
 
@@ -288,8 +300,8 @@ void controlCarrier()
     digitalWrite(FIREPLACE_FAN_PIN, HIGH);  // Fireplace fan to OFF state
     Serial.println("Takkapuhallin pois");
     carrierHeatpump.fireplaceFan = false;
-  } else if  (fireplace > 25) {
-    digitalWrite(FIREPLACE_FAN_PIN, LOW); // Fireplace fan to ON state
+  } else if (fireplace > 25) {
+    digitalWrite(FIREPLACE_FAN_PIN, LOW);   // Fireplace fan to ON state
     Serial.println("Takkapuhallin pÃ¤Ã¤lle");
     carrierHeatpump.fireplaceFan = true;
   }
@@ -335,8 +347,29 @@ void controlCarrier()
       temperature = 24;
       fanSpeed = FAN_AUTO;
     }
+  // Kitchen is hot, as the oven has been running
+  } else if (kitchen > 23.5 ) {
+    // Default to MODE_FAN with FAN 1
+    operatingMode = MODE_FAN;
+    temperature = 22;
+    fanSpeed = FAN_1;
 
-  // Fireplace or utility room is not hot,
+    if (kitchen >= 24 && kitchen < 24.5) {
+      fanSpeed = FAN_2;
+    } else if ( kitchen >= 24.5 && kitchen < 25) {
+      fanSpeed = FAN_3;
+    } else if ( kitchen >= 25 && kitchen < 25.5) {
+      fanSpeed = FAN_4;
+    } else if ( kitchen >= 25.5 && kitchen < 26) {
+      fanSpeed = FAN_5;
+
+    } else if (kitchen >= 26) {
+      // COOL with AUTO FAN, +24
+      operatingMode = MODE_COOL;
+      temperature = 24;
+      fanSpeed = FAN_AUTO;
+    }
+  // Fireplace or utility or kitchen room is not hot,
   // set the mode based on the outdoor temperature
   } else {
     if (outdoor > 28) {
