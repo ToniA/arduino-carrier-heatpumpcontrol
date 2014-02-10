@@ -124,7 +124,6 @@ void setup()
   digitalWrite(FIREPLACE_FAN_PIN, HIGH);  // Fireplace fan to OFF state
 
   // List OneWire devices
-
   for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++)
   {
     lcd.clear();
@@ -143,19 +142,17 @@ void setup()
     delay(1000);
   }
 
-/*
-Serial.println("Obtaining IP address from DHCP server...");
+  Serial.println("Obtaining IP address from DHCP server...");
 
-// initialize the Ethernet adapter with DHCP
-if(Ethernet.begin(macAddress) == 0) {
-Serial.println("Failed to configure Ethernet using DHCP");
-}
+  // initialize the Ethernet adapter with DHCP
+  if (Ethernet.begin(macAddress) == 0) {
+    Serial.println("Failed to configure Ethernet using DHCP");
+  }
 
-delay(1000); // give the Ethernet shield a second to initialize
+  delay(1000); // give the Ethernet shield a second to initialize
 
-Serial.print("IP address from DHCP server: ");
-Serial.println(Ethernet.localIP());
-*/
+  Serial.print("IP address from DHCP server: ");
+  Serial.println(Ethernet.localIP());
 
   // The timed calls
   timer.every(2000, updateDisplay);        // every 2 seconds
@@ -210,12 +207,12 @@ void updateDisplay()
     Serial.println(owbuses[9].temperature - owbuses[8].temperature);
 
     lcd.clear();
-    if (carrierHeatpump.operatingMode == 2)
+    if (carrierHeatpump.operatingMode == MODE_HEAT)
     {
       lcd.print("ILP l\xE1mmitt\xE1\xE1:");
       lcd.setCursor(0, 1);
       lcd.print(owbuses[9].temperature - owbuses[8].temperature);
-    } else if (carrierHeatpump.operatingMode == 1) {
+    } else if (carrierHeatpump.operatingMode == MODE_COOL) {
       lcd.print("ILP j\xE1\xE1hdytt\xE1\xE1:");
       lcd.setCursor(0, 1);
       lcd.print(owbuses[8].temperature - owbuses[9].temperature);
@@ -237,13 +234,13 @@ void updateDisplay()
     lcd.clear();
     lcd.print("MODE: ");
     switch (carrierHeatpump.operatingMode) {
-      case 1:
+      case MODE_COOL:
         lcd.print("COOL");
         break;
-      case 2:
+      case MODE_HEAT:
         lcd.print("HEAT");
         break;
-      case 5:
+      case MODE_FAN:
         lcd.print("FAN");
         break;
     }
