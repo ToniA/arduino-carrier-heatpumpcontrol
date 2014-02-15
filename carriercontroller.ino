@@ -1,14 +1,16 @@
+#include <avr/wdt.h>
 #include <LiquidCrystal.h>
 #include <LCDKeypad.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
-#include <DS18B20.h>
 #include <SPI.h>
 #include <Ethernet.h>
 #include <Timer.h>
 #include <CarrierHeatpumpIR.h> // From HeatpumpIR library, https://github.com/ToniA/arduino-heatpumpir/archive/master.zip
+#include "emoncmsApikey.h"     // This only defines the API key. Excluded from Git, for obvious reasons
 
-#define FIREPLACE_FAN_PIN 49 // Pin for the fireplace relay
+#define FIREPLACE_FAN_PIN 49   // Pin for the fireplace relay
+#define ETHERNET_RST      A7   // Pin for the Ethernet shield reset
 
 // Use digital pins 4, 5, 6, 7, 8, 9, 10, and analog pin 0 to interface with the LCD
 // Do not use Pin 10 while this shield is connected
@@ -20,7 +22,6 @@ LCDKeypad lcd;
 // * Green: Data
 
 // Four 1-wire buses
-
 
 OneWire ow0(30);
 DallasTemperature owsensors0(&ow0);
@@ -54,24 +55,25 @@ struct owbus
 {
     DallasTemperature owbus;
     float temperature;
+    char* emon_name;
     char* name;
 };
 
 // and the array
 owbus owbuses[] = {
-  {owsensors0, DEVICE_DISCONNECTED, "Takka"},                  // Fireplace
-  {owsensors1, DEVICE_DISCONNECTED, "Keitti\xEF"},             // Kitchen
-  {owsensors2, DEVICE_DISCONNECTED, "KHH"},                    // Utility room
-  {owsensors12,DEVICE_DISCONNECTED, "Ulkoilma"},               // Outdoor air
-  {owsensors3, DEVICE_DISCONNECTED, "LTO ulkoilma"},           // Ventilation machine fresh air in
-  {owsensors4, DEVICE_DISCONNECTED, "LTO tulokenno"},          // Ventilation machine fresh air out
-  {owsensors5, DEVICE_DISCONNECTED, "LTO sis\xE1ilma"},        // Ventilation machine waste air in
-  {owsensors6, DEVICE_DISCONNECTED, "LTO poistoilma"},         // Ventilation machine waste air out
-  {owsensors7, DEVICE_DISCONNECTED, "ILP imuilma"},            // Carrier intake air
-  {owsensors8, DEVICE_DISCONNECTED, "ILP puhallusilma"},       // Carrier blowing air
-  {owsensors9, DEVICE_DISCONNECTED, "ILP kuumakaasu"},         // Carrier hot gas pipe
-  {owsensors10,DEVICE_DISCONNECTED, "Kuumavesivar.keski"},     // Hot water boiler middle
-  {owsensors11,DEVICE_DISCONNECTED, "Kuumavesivar.yl\xE1"}     // Hot water boiler up
+  {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takka"},                 // Fireplace
+  {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},              // Kitchen
+  {owsensors2, DEVICE_DISCONNECTED, "utl_room", "KHH"},                    // Utility room
+  {owsensors12,DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},                // Outdoor air
+  {owsensors3, DEVICE_DISCONNECTED, "vent_outdoor", "LTO ulkoilma"},       // Ventilation machine fresh air in
+  {owsensors4, DEVICE_DISCONNECTED, "vent_fresh", "LTO tulokenno"},        // Ventilation machine fresh air out
+  {owsensors5, DEVICE_DISCONNECTED, "vent_dirty", "LTO sis\xE1ilma"},      // Ventilation machine waste air in
+  {owsensors6, DEVICE_DISCONNECTED, "vent_waste", "LTO poistoilma"},       // Ventilation machine waste air out
+  {owsensors7, DEVICE_DISCONNECTED, "aircond_intake", "ILP imuilma"},      // Carrier intake air
+  {owsensors8, DEVICE_DISCONNECTED, "aircond_out", "ILP puhallusilma"},    // Carrier blowing air
+  {owsensors9, DEVICE_DISCONNECTED, "aircond_hotpipe", "ILP kuumakaasu"},  // Carrier hot gas pipe
+  {owsensors10,DEVICE_DISCONNECTED, "boiler_mid", "Kuumavesivar.keski"},   // Hot water boiler middle
+  {owsensors11,DEVICE_DISCONNECTED, "boiler_top", "Kuumavesivar.yl\xE1"}   // Hot water boiler up
 };
 
 
@@ -97,8 +99,9 @@ IRSender irSender(46); // IR led on Mega digital pin 46
 // The number of the displayed sensor
 int displayedSensor = 0;
 
-// MAC address for the Ethernet shield
+// MAC & IP address for the Ethernet shield
 byte macAddress[6] = { 0x02, 0x26, 0x89, 0x00, 0x00, 0xFE};
+IPAddress ip(192, 168, 100, 9);
 
 // The timers
 Timer timer;
@@ -142,22 +145,44 @@ void setup()
     delay(1000);
   }
 
-  Serial.println("Obtaining IP address from DHCP server...");
+  Serial.println("Initializing Ethernet...");
 
-  // initialize the Ethernet adapter with DHCP
-  if (Ethernet.begin(macAddress) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
-  }
+  // Ethernet shield reset trick
+  // Need to cut the RESET lines (also from ICSP header) and connect an I/O (A1 in this case) to RESET on the shield
+
+  pinMode(ETHERNET_RST, OUTPUT);
+  digitalWrite(ETHERNET_RST, HIGH);
+  delay(50);
+  digitalWrite(ETHERNET_RST, LOW);
+  delay(50);
+  digitalWrite(ETHERNET_RST, HIGH);
+  delay(100);
+
+  // initialize the Ethernet adapter with static IP address
+  Ethernet.begin(macAddress, ip);
 
   delay(1000); // give the Ethernet shield a second to initialize
 
-  Serial.print("IP address from DHCP server: ");
+  lcd.clear();
+  lcd.print("IP-osoite");
+  lcd.setCursor(0, 1);
+  lcd.print(Ethernet.localIP());
+
+  Serial.print("IP address (static): ");
   Serial.println(Ethernet.localIP());
 
+  // Temperatures to be measured immediately
+  requestTemperatures();
+
   // The timed calls
+  timer.every(2000, feedWatchdog);         // every 2 seconds
   timer.every(2000, updateDisplay);        // every 2 seconds
+  timer.every(60000, updateEmoncms);       // every minute
   timer.every(15000, requestTemperatures); // every 15 seconds
   timer.every(300000L, controlCarrier);    // every 5 minutes
+
+  // Enable watchdog
+  wdt_enable(WDTO_8S);
 }
 
 void loop()
@@ -431,4 +456,66 @@ void controlCarrier()
     // Send the IR command
     heatpumpIR->send(irSender, POWER_ON, carrierHeatpump.operatingMode, carrierHeatpump.fanSpeed, carrierHeatpump.temperature, VDIR_MANUAL, HDIR_MANUAL);
   }
+}
+
+void updateEmoncms() {
+
+  EthernetClient client;
+  boolean notFirst = false;
+
+  Serial.println("Connecting to emoncms.org...");
+
+  if (client.connect("www.emoncms.org", 80)) {
+    // send the HTTP GET request:
+    client.print("GET http://www.emoncms.org/api/post?apikey=");
+    client.print(EMONCMS_APIKEY);
+    client.print("&json={");
+
+    // Log sensor temperatures
+    for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++) {
+      if (owbuses[i].temperature != DEVICE_DISCONNECTED) {
+        if (notFirst) {
+          client.print(",");
+        }
+        notFirst = true;
+
+        client.print(owbuses[i].emon_name);
+        client.print(":");
+        client.print(owbuses[i].temperature);
+      }
+    }
+
+    // Log heatpump state
+    client.print(",heatpump_temp:");
+    client.print(carrierHeatpump.temperature);
+    client.print(",heatpump_mode:");
+    client.print(carrierHeatpump.operatingMode);
+    client.print(",heatpump_fanspeed:");
+    client.print(carrierHeatpump.fanSpeed);
+
+    client.println("} HTTP/1.1");
+    client.println("Host: 192.168.0.15");
+    client.println("User-Agent: Arduino-ethernet");
+    client.println("Connection: close");
+    client.println();
+
+    Serial.println(F("\nemoncms.org response:\n---"));
+    while (client.connected()) {
+      while (client.available()) {
+        char c = client.read();
+        Serial.print(c);
+      }
+    }
+
+    Serial.println();
+    client.stop();
+  }
+}
+
+//
+// The most important thing of all, feed the watchdog
+//
+void feedWatchdog()
+{
+  wdt_reset();
 }
