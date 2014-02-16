@@ -167,7 +167,7 @@ void setup()
   timer.every(2000, updateDisplay);        // every 2 seconds
   timer.every(60000, updateEmoncms);       // every minute
   timer.every(15000, requestTemperatures); // every 15 seconds
-  timer.every(300000L, controlCarrier);    // every 5 minutes
+  timer.every(330017L, controlCarrier);    // every 5 minutes
 
   // Enable watchdog
   wdt_enable(WDTO_8S);
