@@ -167,7 +167,7 @@ void setup()
   timer.every(2000, updateDisplay);        // every 2 seconds
   timer.every(60000, updateEmoncms);       // every minute
   timer.every(15000, requestTemperatures); // every 15 seconds
-  timer.every(330017L, controlCarrier);    // every 5 minutes
+  timer.every(330017L, controlCarrier);    // every ~5 minutes
 
   // Enable watchdog
   wdt_enable(WDTO_8S);
@@ -480,6 +480,12 @@ void updateEmoncms() {
     client.print(carrierHeatpump.operatingMode);
     client.print(",heatpump_fanspeed:");
     client.print(carrierHeatpump.fanSpeed);
+    client.print(",fireplace_fan:");
+    if (carrierHeatpump.fireplaceFan == true) {
+      client.print("1");
+    } else {
+      client.print("0");
+    }
 
     client.println("} HTTP/1.1");
     client.println("Host: 192.168.0.15");
