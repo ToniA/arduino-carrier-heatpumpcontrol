@@ -10,7 +10,6 @@
 #include "emoncmsApikey.h"     // This only defines the API key. Excluded from Git, for obvious reasons
 
 #define FIREPLACE_FAN_PIN 49   // Pin for the fireplace relay
-#define ETHERNET_RST      A7   // Pin for the Ethernet shield reset
 
 // Use digital pins 4, 5, 6, 7, 8, 9, 10, and analog pin 0 to interface with the LCD
 // Do not use Pin 10 while this shield is connected
@@ -146,17 +145,6 @@ void setup()
   }
 
   Serial.println("Initializing Ethernet...");
-
-  // Ethernet shield reset trick
-  // Need to cut the RESET lines (also from ICSP header) and connect an I/O (A1 in this case) to RESET on the shield
-
-  pinMode(ETHERNET_RST, OUTPUT);
-  digitalWrite(ETHERNET_RST, HIGH);
-  delay(50);
-  digitalWrite(ETHERNET_RST, LOW);
-  delay(50);
-  digitalWrite(ETHERNET_RST, HIGH);
-  delay(100);
 
   // initialize the Ethernet adapter with static IP address
   Ethernet.begin(macAddress, ip);
