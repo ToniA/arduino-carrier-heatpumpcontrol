@@ -6,10 +6,17 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <Timer.h>
-#include <CarrierHeatpumpIR.h> // From HeatpumpIR library, https://github.com/ToniA/arduino-heatpumpir/archive/master.zip
-#include "emoncmsApikey.h"     // This only defines the API key. Excluded from Git, for obvious reasons
+#include <CarrierHeatpumpIR.h>  // From HeatpumpIR library, https://github.com/ToniA/arduino-heatpumpir/archive/master.zip
+#include "emoncmsApikey.h"      // This only defines the API key. Excluded from Git, for obvious reasons
 
-#define FIREPLACE_FAN_PIN 49   // Pin for the fireplace relay
+#define FIREPLACE_FAN_PIN 49    // Pin for the fireplace relay
+#define WATER_STOP_VALVE_PIN 29 // Pin for the Water stop relay
+#define WAREHOUSE_RELAY_PIN 35  // Pin for the relay in the warehouse  (optional)
+
+// Not programmed yet:
+// * Water meter pin 27
+// * CO-sensor pin 45
+// * Humidity sensor pin 47
 
 // Use digital pins 4, 5, 6, 7, 8, 9, 10, and analog pin 0 to interface with the LCD
 // Do not use Pin 10 while this shield is connected
@@ -48,6 +55,16 @@ OneWire ow11(41);
 DallasTemperature owsensors11(&ow11);
 OneWire ow12(24);
 DallasTemperature owsensors12(&ow12);
+OneWire ow13(37);
+DallasTemperature owsensors13(&ow13);
+OneWire ow14(23);
+DallasTemperature owsensors14(&ow14);
+OneWire ow15(31);
+DallasTemperature owsensors15(&ow15);
+OneWire ow16(33);
+DallasTemperature owsensors16(&ow16);
+OneWire ow17(21);
+DallasTemperature owsensors17(&ow17);
 // Structure to hold them
 typedef struct owbus owbus;
 struct owbus
@@ -63,6 +80,9 @@ owbus owbuses[] = {
   {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takka"},                 // Fireplace
   {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},              // Kitchen
   {owsensors2, DEVICE_DISCONNECTED, "utl_room", "KHH"},                    // Utility room
+  {owsensors15,DEVICE_DISCONNECTED, "bedroom", "Julian huone"},            // bedroom
+  {owsensors16,DEVICE_DISCONNECTED, "master_bedroom", "Makuuhuone"},       // Master bedroom
+  {owsensors17,DEVICE_DISCONNECTED, "warehouse", "Varasto"},               // warehouse
   {owsensors12,DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},                // Outdoor air
   {owsensors3, DEVICE_DISCONNECTED, "vent_outdoor", "LTO ulkoilma"},       // Ventilation machine fresh air in
   {owsensors4, DEVICE_DISCONNECTED, "vent_fresh", "LTO tulokenno"},        // Ventilation machine fresh air out
@@ -72,7 +92,9 @@ owbus owbuses[] = {
   {owsensors8, DEVICE_DISCONNECTED, "aircond_out", "ILP puhallusilma"},    // Carrier blowing air
   {owsensors9, DEVICE_DISCONNECTED, "aircond_hotpipe", "ILP kuumakaasu"},  // Carrier hot gas pipe
   {owsensors10,DEVICE_DISCONNECTED, "boiler_mid", "Kuumavesivar.keski"},   // Hot water boiler middle
-  {owsensors11,DEVICE_DISCONNECTED, "boiler_top", "Kuumavesivar.yl\xE1"}   // Hot water boiler up
+  {owsensors11,DEVICE_DISCONNECTED, "boiler_top", "Kuumavesivar.yl\xE1"},  // Hot water boiler up
+  {owsensors13,DEVICE_DISCONNECTED, "hot_water", "Kuumavesi"},             // Hot water
+  {owsensors14,DEVICE_DISCONNECTED, "water", "Vesi"}                       // Cold Water
 };
 
 
@@ -100,7 +122,7 @@ int displayedSensor = 0;
 
 // MAC & IP address for the Ethernet shield
 byte macAddress[6] = { 0x02, 0x26, 0x89, 0x00, 0x00, 0xFE};
-IPAddress ip(192, 168, 100, 9);
+IPAddress ip(192, 168, 1, 9);
 
 // The timers
 Timer timer;
@@ -124,6 +146,18 @@ void setup()
 
   // Default mode for the Fireplace is OFF
   digitalWrite(FIREPLACE_FAN_PIN, HIGH);  // Fireplace fan to OFF state
+
+ // Water stop relay
+  pinMode(WATER_STOP_VALVE_PIN, OUTPUT);
+
+  // Default mode for the Water stop is OFF
+  digitalWrite(WATER_STOP_VALVE_PIN, HIGH); // Water stop to OFF state, i.e. water flows
+  
+  // Relay in the warehouse
+  pinMode(WAREHOUSE_RELAY_PIN, OUTPUT);
+
+  // Default mode for the warehouse relay is OFF
+  digitalWrite(WAREHOUSE_RELAY_PIN, HIGH); // Warehouse relay to OFF state
 
   // List OneWire devices
   for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++)
