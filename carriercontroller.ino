@@ -27,7 +27,7 @@ LCDKeypad lcd;
 // * Yellow: Ground
 // * Green: Data
 
-// Four 1-wire buses
+// 1-wire buses
 
 OneWire ow0(30);
 DallasTemperature owsensors0(&ow0);
@@ -65,6 +65,7 @@ OneWire ow16(33);
 DallasTemperature owsensors16(&ow16);
 OneWire ow17(21);
 DallasTemperature owsensors17(&ow17);
+
 // Structure to hold them
 typedef struct owbus owbus;
 struct owbus
@@ -126,6 +127,9 @@ IPAddress ip(192, 168, 1, 9);
 
 // The timers
 Timer timer;
+
+// The amount of water meter pulses since the last update to emoncms
+volatile int waterPulses = 0;
 
 
 void setup()
@@ -202,6 +206,10 @@ void setup()
   timer.every(60000, updateEmoncms);       // every minute
   timer.every(15000, requestTemperatures); // every 15 seconds
   timer.every(330017L, controlCarrier);    // every ~5 minutes
+
+  // Water meter pulse counter interrupt
+  // interrupt 3 uses pin 20
+  attachInterrupt(3, incrementWaterPulses, FALLING);
 
   // Enable watchdog
   wdt_enable(WDTO_8S);
@@ -480,10 +488,20 @@ void controlCarrier()
   }
 }
 
+//
+// Report measurement data to emoncms.org
+//
 void updateEmoncms() {
 
   EthernetClient client;
   boolean notFirst = false;
+  int emonWaterPulses = 0;
+
+  // Interrupts need to be disabled while the pulse counter is read or modified...
+  noInterrupts();
+  emonWaterPulses = waterPulses;
+  waterPulses = 0;
+  interrupts();
 
   Serial.println("Connecting to emoncms.org...");
 
@@ -520,6 +538,9 @@ void updateEmoncms() {
     } else {
       client.print("0");
     }
+    // Log the water meter pulses
+    client.print(",water_pulses:");
+    client.print(emonWaterPulses);
 
     client.println("} HTTP/1.1");
     client.println("Host: 192.168.0.15");
@@ -538,6 +559,14 @@ void updateEmoncms() {
     Serial.println();
     client.stop();
   }
+}
+
+//
+// Increment the number of water meter pulses
+//
+void incrementWaterPulses()
+{
+  waterPulses++;
 }
 
 //
