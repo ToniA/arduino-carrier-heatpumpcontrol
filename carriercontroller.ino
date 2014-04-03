@@ -6,17 +6,17 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <Timer.h>
+#include <DHT.h>                // From https://github.com/adafruit/DHT-sensor-library
 #include <CarrierHeatpumpIR.h>  // From HeatpumpIR library, https://github.com/ToniA/arduino-heatpumpir/archive/master.zip
 #include "emoncmsApikey.h"      // This only defines the API key. Excluded from Git, for obvious reasons
 
-#define FIREPLACE_FAN_PIN 49    // Pin for the fireplace relay
+#define FIREPLACE_FAN_PIN    49 // Pin for the fireplace relay
 #define WATER_STOP_VALVE_PIN 29 // Pin for the Water stop relay
-#define WAREHOUSE_RELAY_PIN 35  // Pin for the relay in the warehouse  (optional)
+#define WAREHOUSE_RELAY_PIN  35 // Pin for the relay in the warehouse  (optional)
 
-// Not programmed yet:
-// * Water meter pin 27
-// * CO-sensor pin 45
-// * Humidity sensor pin 47
+#define DHT11_PIN            47 // Pin for the DHT11 temperature/humidity sensor, uses +5, GND and some digital pin
+#define MQ7_PIN              A8 // Pin for the MQ-7 CO sensor pin, uses +5V, GND and some analog pin
+#define IR_PIN               46 // Pin for the IR led, must be a PWM pin
 
 // Use digital pins 4, 5, 6, 7, 8, 9, 10, and analog pin 0 to interface with the LCD
 // Do not use Pin 10 while this shield is connected
@@ -116,7 +116,7 @@ CarrierHeatpump carrierHeatpump = { 2, 0, 22, false };
 
 // The Carrier heatpump instance, and the IRSender instance
 HeatpumpIR *heatpumpIR = new CarrierHeatpumpIR();
-IRSender irSender(46); // IR led on Mega digital pin 46
+IRSender irSender(IR_PIN); // IR led on Mega digital pin 46
 
 // The number of the displayed sensor
 int displayedSensor = 0;
@@ -130,7 +130,14 @@ Timer timer;
 
 // The amount of water meter pulses since the last update to emoncms
 volatile int waterPulses = 0;
+int waterPulsesHistory[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 12 minute water use history
 
+// DHT11 and MQ-7 sensor readings
+DHT dht(DHT11_PIN, DHT11);
+
+float DHT11Humidity = 0.0;
+float DHT11Temperature = 0.0;
+int MQ7COLevel = 0;
 
 void setup()
 {
@@ -201,15 +208,21 @@ void setup()
   requestTemperatures();
 
   // The timed calls
-  timer.every(2000, feedWatchdog);         // every 2 seconds
-  timer.every(2000, updateDisplay);        // every 2 seconds
-  timer.every(60000, updateEmoncms);       // every minute
-  timer.every(15000, requestTemperatures); // every 15 seconds
-  timer.every(330017L, controlCarrier);    // every ~5 minutes
+  timer.every(2000, feedWatchdog);          // every 2 seconds
+  timer.every(2000, updateDisplay);         // every 2 seconds
+  timer.every(60000, readDHT11);            // every minute
+  timer.every(60000, readMQ7);              // every minute
+  timer.every(60000, updateEmoncms);        // every minute
+  timer.every(60000, checkForWaterShutoff); // every minute
+  timer.every(15000, requestTemperatures);  // every 15 seconds
+  timer.every(330017L, controlCarrier);     // every ~5 minutes
 
   // Water meter pulse counter interrupt
   // interrupt 3 uses pin 20
   attachInterrupt(3, incrementWaterPulses, FALLING);
+
+  // Initialize the DHT library
+  dht.begin();
 
   // Enable watchdog
   wdt_enable(WDTO_8S);
@@ -503,6 +516,13 @@ void updateEmoncms() {
   waterPulses = 0;
   interrupts();
 
+  // Update the water use history
+  for (byte i=0; i++; i<sizeof(waterPulsesHistory) / sizeof(int) - 1) {
+    waterPulsesHistory[i+1] = waterPulsesHistory[i];
+  }
+  waterPulsesHistory[0] = emonWaterPulses;
+
+  // Report the data into emoncms.org
   Serial.println("Connecting to emoncms.org...");
 
   if (client.connect("www.emoncms.org", 80)) {
@@ -541,6 +561,14 @@ void updateEmoncms() {
     // Log the water meter pulses
     client.print(",water_pulses:");
     client.print(emonWaterPulses);
+    // Log the DHT11 readings
+    client.print(",dht11_humidity:");
+    client.print(DHT11Humidity);
+    client.print(",dht11_temperature:");
+    client.print(DHT11Temperature);
+    // Log the MQ7 readings
+    client.print(",mq7_colevel:");
+    client.print(MQ7COLevel);
 
     client.println("} HTTP/1.1");
     client.println("Host: 192.168.0.15");
@@ -559,6 +587,73 @@ void updateEmoncms() {
     Serial.println();
     client.stop();
   }
+}
+
+//
+// Read the DHT11 humidity & temperature sensor
+//
+void readDHT11() {
+  DHT11Humidity = dht.readHumidity();
+  DHT11Temperature = dht.readTemperature();
+
+  // check if returns are valid, if they are NaN (not a number) then something went wrong!
+  if (isnan(DHT11Humidity) || isnan(DHT11Temperature)) {
+    DHT11Humidity = 0.0;
+    DHT11Temperature = 0.0;
+  }
+}
+
+//
+// Read the MQ-7 CO sensor
+//
+void readMQ7() {
+  MQ7COLevel = analogRead(MQ7_PIN);
+}
+
+//
+// Water use checks
+//
+void checkForWaterShutoff() {
+  checkForWaterUse();
+  checkForShowerWaterUse();
+  checkForWaterLeak();
+}
+
+//
+// Check for excessive water use
+//
+void checkForWaterUse() {
+
+  if ( waterPulsesHistory[0] > 14 &&
+       waterPulsesHistory[1] > 15 &&
+       waterPulsesHistory[2] > 14 ) {
+    // Water leak - shut off water
+    digitalWrite(WATER_STOP_VALVE_PIN, LOW);
+  }
+}
+
+//
+// Check for excessive shower water use
+//
+void checkForShowerWaterUse() {
+}
+
+//
+// Check if the water valve needs to be shut due to a leak - same amount of water use for 12 minutes
+//
+void checkForWaterLeak() {
+
+  int firstWaterPulse = waterPulsesHistory[0];
+
+  // If all samples are the same, shut off water
+  for (byte i=1; i++; i<sizeof(waterPulsesHistory) / sizeof(int)) {
+    if ( waterPulsesHistory[i] != 0 && waterPulsesHistory[i] != firstWaterPulse ) {
+      return;
+    }
+  }
+
+  // Water leak - shut off water
+  digitalWrite(WATER_STOP_VALVE_PIN, LOW);
 }
 
 //
