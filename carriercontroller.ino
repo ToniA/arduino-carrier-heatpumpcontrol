@@ -14,9 +14,11 @@
 #define WATER_STOP_VALVE_PIN 29 // Pin for the Water stop relay
 #define WAREHOUSE_RELAY_PIN  35 // Pin for the relay in the warehouse  (optional)
 
-#define DHT11_PIN            47 // Pin for the DHT11 temperature/humidity sensor, uses +5, GND and some digital pin
-#define MQ7_PIN              A8 // Pin for the MQ-7 CO sensor pin, uses +5V, GND and some analog pin
+#define DHT11_PIN            39 // Pin for the DHT11 temperature/humidity sensor, uses +5, GND and some digital pin
+#define MQ7_PIN             A15 // Pin for the MQ-7 CO sensor pin, uses +5V, GND and some analog pin
 #define IR_PIN               46 // Pin for the IR led, must be a PWM pin
+
+#define ALARM_STATE_PIN      22 // Pin for the alarm system state
 
 // Use digital pins 4, 5, 6, 7, 8, 9, 10, and analog pin 0 to interface with the LCD
 // Do not use Pin 10 while this shield is connected
@@ -139,6 +141,9 @@ float DHT11Humidity = 0.0;
 float DHT11Temperature = 0.0;
 int MQ7COLevel = 0;
 
+// Alarm state
+int alarmState;
+
 void setup()
 {
   // Serial initialization
@@ -169,6 +174,9 @@ void setup()
 
   // Default mode for the warehouse relay is OFF
   digitalWrite(WAREHOUSE_RELAY_PIN, HIGH); // Warehouse relay to OFF state
+
+  // Alarm state is an input pin
+  pinMode(ALARM_STATE_PIN, INPUT_PULLUP);
 
   // List OneWire devices
   for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++)
@@ -210,6 +218,7 @@ void setup()
   // The timed calls
   timer.every(2000, feedWatchdog);          // every 2 seconds
   timer.every(2000, updateDisplay);         // every 2 seconds
+  timer.every(2000, alarmWaterShutoff);     // every 1 seconds
   timer.every(60000, readDHT11);            // every minute
   timer.every(60000, readMQ7);              // every minute
   timer.every(60000, updateEmoncms);        // every minute
@@ -231,6 +240,9 @@ void setup()
 void loop()
 {
   timer.update();
+
+  // Alarm state is not an interrupt
+  alarmState = digitalRead(ALARM_STATE_PIN);
 }
 
 // Request the temperature measurement on all 1-wire buses
@@ -569,6 +581,13 @@ void updateEmoncms() {
     // Log the MQ7 readings
     client.print(",mq7_colevel:");
     client.print(MQ7COLevel);
+    // Log the alarm state
+    client.print(",alarm_state:");
+    if ( alarmState = LOW ) {
+      client.print("0");
+    } else {
+      client.print("1");
+    }
 
     client.println("} HTTP/1.1");
     client.println("Host: 192.168.0.15");
@@ -604,7 +623,7 @@ void readDHT11() {
 }
 
 //
-// Read the MQ-7 CO sensor
+// Read the MQ-7 CO sensor, see http://www.dfrobot.com/wiki/index.php?title=Carbon_Monoxide_Sensor(MQ7)_(SKU:SEN0132)
 //
 void readMQ7() {
   MQ7COLevel = analogRead(MQ7_PIN);
@@ -654,6 +673,15 @@ void checkForWaterLeak() {
 
   // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
+}
+
+//
+// Check if the water valve needs to be open or shut, based on the alarm state
+// TODO: This should also consider the water leaks
+//
+void alarmWaterShutoff() {
+
+  digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
 }
 
 //
