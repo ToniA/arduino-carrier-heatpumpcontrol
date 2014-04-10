@@ -583,7 +583,7 @@ void updateEmoncms() {
     client.print(MQ7COLevel);
     // Log the alarm state
     client.print(",alarm_state:");
-    if ( alarmState = LOW ) {
+    if ( alarmState == LOW ) {
       client.print("0");
     } else {
       client.print("1");
