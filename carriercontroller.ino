@@ -16,6 +16,7 @@
 
 #define DHT11_PIN            39 // Pin for the DHT11 temperature/humidity sensor, uses +5, GND and some digital pin
 #define MQ7_PIN             A15 // Pin for the MQ-7 CO sensor pin, uses +5V, GND and some analog pin
+#define MG811_PIN           A14 // Pin for the MG-811 Co2 sensor pin, uses +5V, GND and some analog pin
 #define IR_PIN               46 // Pin for the IR led, must be a PWM pin
 
 #define ALARM_STATE_PIN      22 // Pin for the alarm system state
@@ -134,12 +135,13 @@ Timer timer;
 volatile int waterPulses = 0;
 int waterPulsesHistory[12] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; // 12 minute water use history
 
-// DHT11 and MQ-7 sensor readings
+// DHT11, MQ-7 & MG811 sensor readings
 DHT dht(DHT11_PIN, DHT11);
 
 float DHT11Humidity = 0.0;
 float DHT11Temperature = 0.0;
 int MQ7COLevel = 0;
+float MG811CO2Level = 400;
 
 // Alarm state
 int alarmState;
@@ -221,6 +223,7 @@ void setup()
   timer.every(2000, alarmWaterShutoff);     // every 1 seconds
   timer.every(60000, readDHT11);            // every minute
   timer.every(60000, readMQ7);              // every minute
+  timer.every(60000, readMG811);            // every minute
   timer.every(60000, updateEmoncms);        // every minute
   timer.every(60000, checkForWaterShutoff); // every minute
   timer.every(15000, requestTemperatures);  // every 15 seconds
@@ -581,6 +584,9 @@ void updateEmoncms() {
     // Log the MQ7 readings
     client.print(",mq7_colevel:");
     client.print(MQ7COLevel);
+    // Log the MG811 readings
+    client.print(",mg811_co2level:");
+    client.print(MG811CO2Level);
     // Log the alarm state
     client.print(",alarm_state:");
     if ( alarmState == LOW ) {
@@ -690,6 +696,26 @@ void alarmWaterShutoff() {
 void incrementWaterPulses()
 {
   waterPulses++;
+}
+
+//
+// Measure the CO2 level
+//
+void readMG811() {
+  // Sensor Calibration Constants
+  const float v400ppm = 2.84;   //MUST BE SET ACCORDING TO CALIBRATION -> 2.84
+  const float v40000ppm = 1.87; //MUST BE SET ACCORDING TO CALIBRATION -> 1.87
+  const float deltavs = v400ppm - v40000ppm;
+  const float A = deltavs/(log10(400) - log10(40000));
+  const float B = log10(400);
+
+  // Read co2 data from sensor
+  int data = analogRead(MG811_PIN); //digitise output from c02 sensor
+  float voltage = data/204.6;       //convert output to voltage
+
+  // Calculate co2 from log10 formula (see sensor datasheet)
+  float power = ((voltage - v400ppm)/A) + B;
+  MG811CO2Level = pow(10,power);
 }
 
 //
