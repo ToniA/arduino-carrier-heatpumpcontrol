@@ -221,9 +221,7 @@ void setup()
   timer.every(2000, feedWatchdog);          // every 2 seconds
   timer.every(2000, updateDisplay);         // every 2 seconds
   timer.every(2000, alarmWaterShutoff);     // every 1 seconds
-  timer.every(60000, readDHT11);            // every minute
-  timer.every(60000, readMQ7);              // every minute
-  timer.every(60000, readMG811);            // every minute
+  timer.every(60000, readSensors);          // every minute
   timer.every(60000, updateEmoncms);        // every minute
   timer.every(60000, checkForWaterShutoff); // every minute
   timer.every(15000, requestTemperatures);  // every 15 seconds
@@ -614,6 +612,13 @@ void updateEmoncms() {
   }
 }
 
+void readSensors() {
+  readDHT11();
+  readMQ7();
+  readMG811();
+}
+
+
 //
 // Read the DHT11 humidity & temperature sensor
 //
@@ -634,6 +639,27 @@ void readDHT11() {
 void readMQ7() {
   MQ7COLevel = analogRead(MQ7_PIN);
 }
+
+//
+// Read the MG811 CO2 sensor, see http://www.veetech.org.uk/Prototype_CO2_Monitor.htm
+//
+void readMG811() {
+  // Sensor Calibration Constants
+  const float v400ppm = 2.84;   //MUST BE SET ACCORDING TO CALIBRATION -> 2.84
+  const float v40000ppm = 1.87; //MUST BE SET ACCORDING TO CALIBRATION -> 1.87
+  const float deltavs = v400ppm - v40000ppm;
+  const float A = deltavs/(log10(400) - log10(40000));
+  const float B = log10(400);
+
+  // Read co2 data from sensor
+  int data = analogRead(MG811_PIN); //digitise output from c02 sensor
+  float voltage = data/204.6;       //convert output to voltage
+
+  // Calculate co2 from log10 formula (see sensor datasheet)
+  float power = ((voltage - v400ppm)/A) + B;
+  MG811CO2Level = pow(10,power);
+}
+
 
 //
 // Water use checks
@@ -698,25 +724,6 @@ void incrementWaterPulses()
   waterPulses++;
 }
 
-//
-// Measure the CO2 level
-//
-void readMG811() {
-  // Sensor Calibration Constants
-  const float v400ppm = 2.84;   //MUST BE SET ACCORDING TO CALIBRATION -> 2.84
-  const float v40000ppm = 1.87; //MUST BE SET ACCORDING TO CALIBRATION -> 1.87
-  const float deltavs = v400ppm - v40000ppm;
-  const float A = deltavs/(log10(400) - log10(40000));
-  const float B = log10(400);
-
-  // Read co2 data from sensor
-  int data = analogRead(MG811_PIN); //digitise output from c02 sensor
-  float voltage = data/204.6;       //convert output to voltage
-
-  // Calculate co2 from log10 formula (see sensor datasheet)
-  float power = ((voltage - v400ppm)/A) + B;
-  MG811CO2Level = pow(10,power);
-}
 
 //
 // The most important thing of all, feed the watchdog
