@@ -142,6 +142,7 @@ float DHT11Humidity = 0.0;
 float DHT11Temperature = 0.0;
 int MQ7COLevel = 0;
 float MG811CO2Level = 400;
+float MG811Voltage = 0.0;
 
 // Alarm state
 int alarmState;
@@ -338,7 +339,7 @@ void updateDisplay()
       lcd.print(carrierHeatpump.fanSpeed);
     }
     displayedSensor++;
-  } else {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 3)) {
     // Fireplace mode display
     lcd.clear();
     lcd.print("Takkapuhallin");
@@ -352,6 +353,25 @@ void updateDisplay()
       lcd.print("OFF");
       Serial.println("Fireplace fan: OFF");
     }
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 4)) {
+    // CO2 level
+    lcd.clear();
+    lcd.print("CO2-taso");
+
+    lcd.setCursor(0, 1);
+    lcd.print(MG811CO2Level);
+    lcd.print(" ppm");
+
+    displayedSensor++;
+  } else {
+    // CO2 sensor voltage
+    lcd.clear();
+    lcd.print("CO2 j\xE1nnite");
+
+    lcd.setCursor(0, 1);
+    lcd.print(MG811Voltage);
+    lcd.print(" V");
 
     displayedSensor = 0;
   }
@@ -653,10 +673,10 @@ void readMG811() {
 
   // Read co2 data from sensor
   int data = analogRead(MG811_PIN); //digitise output from c02 sensor
-  float voltage = data/204.6;       //convert output to voltage
+  MG811Voltage = data/204.6;       //convert output to voltage
 
   // Calculate co2 from log10 formula (see sensor datasheet)
-  float power = ((voltage - v400ppm)/A) + B;
+  float power = ((MG811Voltage - v400ppm)/A) + B;
   MG811CO2Level = pow(10,power);
 }
 
