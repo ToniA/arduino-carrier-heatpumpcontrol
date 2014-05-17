@@ -716,9 +716,13 @@ void checkForWaterLeak() {
 
   int firstWaterPulse = waterPulsesHistory[0];
 
-  // If all samples are the same, shut off water
   for (byte i=1; i++; i<sizeof(waterPulsesHistory) / sizeof(int)) {
-    if ( waterPulsesHistory[i] != 0 && waterPulsesHistory[i] != firstWaterPulse ) {
+    // It's not a leak if water isn't flowing
+    if ( waterPulsesHistory[i] == 0 ) {
+      return;
+    }
+    // If all samples are within +-1 of the first sample, shut off water
+    else if ( waterPulsesHistory[i] >= firstWaterPulse-1 && waterPulsesHistory[i] <= firstWaterPulse+1) ) {
       return;
     }
   }
