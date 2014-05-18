@@ -147,6 +147,9 @@ float MG811Voltage = 0.0;
 // Alarm state
 int alarmState;
 
+// Water state
+bool waterState;
+
 void setup()
 {
   // Serial initialization
@@ -406,8 +409,31 @@ void controlCarrier()
 
 
   // Heatpump control
+  // Set the mode based on the outdoor temperature (summer cooling)
+
+  if (outdoor >=24 && outdoor < 25) {
+    // COOL with AUTO FAN, +24
+    operatingMode = MODE_COOL;
+    temperature = 26;
+    fanSpeed = FAN_AUTO;
+  } else if (outdoor >= 25 && outdoor < 26) {
+    // COOL with AUTO FAN, +24
+    operatingMode = MODE_COOL;
+    temperature = 25;
+    fanSpeed = FAN_AUTO;
+  } else if (outdoor >= 26 && outdoor < 27) {
+    // COOL with AUTO FAN, +24
+    operatingMode = MODE_COOL;
+    temperature = 24;
+    fanSpeed = FAN_AUTO;
+  } else if (outdoor >= 27) {
+    // COOL with AUTO FAN, +24
+    operatingMode = MODE_COOL;
+    temperature = 24;
+    fanSpeed = FAN_AUTO;
 
   // Fireplace is hot, use the FAN mode
+  } else {
   if (fireplace > 25) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
@@ -468,14 +494,9 @@ void controlCarrier()
       fanSpeed = FAN_AUTO;
     }
   // Fireplace or utility or kitchen room is not hot,
-  // set the mode based on the outdoor temperature
+  // Set the mode based on the outdoor temperature (heating)
   } else {
-    if (outdoor > 28) {
-      // COOL with AUTO FAN, +24
-      operatingMode = MODE_COOL;
-      temperature = 24;
-      fanSpeed = FAN_AUTO;
-    } else if (outdoor >= 5 && outdoor < 15) {
+    } if (outdoor >= 5 && outdoor < 15) {
       // HEAT with AUTO FAN, +23
       operatingMode = MODE_HEAT;
       temperature = 23;
@@ -587,9 +608,9 @@ void updateEmoncms() {
     client.print(carrierHeatpump.fanSpeed);
     client.print(",fireplace_fan:");
     if (carrierHeatpump.fireplaceFan == true) {
-      client.print("1");
-    } else {
       client.print("0");
+    } else {
+      client.print("1");
     }
     // Log the water meter pulses
     client.print(",water_pulses:");
@@ -611,6 +632,13 @@ void updateEmoncms() {
       client.print("0");
     } else {
       client.print("1");
+    }
+     // Log the water state
+    client.print(",water_state:");
+    if ( waterState == true ) {
+      client.print("1");
+    } else {
+      client.print("0");
     }
 
     client.println("} HTTP/1.1");
@@ -657,7 +685,7 @@ void readDHT11() {
 // Read the MQ-7 CO sensor, see http://www.dfrobot.com/wiki/index.php?title=Carbon_Monoxide_Sensor(MQ7)_(SKU:SEN0132)
 //
 void readMQ7() {
-  MQ7COLevel = analogRead(MQ7_PIN);
+  MQ7COLevel = analogRead(MQ7_PIN); //FREE AIR 51 18.05.2014
 }
 
 //
@@ -665,8 +693,8 @@ void readMQ7() {
 //
 void readMG811() {
   // Sensor Calibration Constants
-  const float v400ppm = 2.84;   //MUST BE SET ACCORDING TO CALIBRATION -> 2.84
-  const float v40000ppm = 1.87; //MUST BE SET ACCORDING TO CALIBRATION -> 1.87
+  const float v400ppm = 2.72; //MUST BE SET ACCORDING TO CALIBRATION ->  FREE AIR 2.84      2.72 18.05.2014
+  const float v40000ppm = 1.30; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87     1.30 18.05.2014
   const float deltavs = v400ppm - v40000ppm;
   const float A = deltavs/(log10(400) - log10(40000));
   const float B = log10(400);
@@ -700,6 +728,7 @@ void checkForWaterUse() {
        waterPulsesHistory[2] > 14 ) {
     // Water leak - shut off water
     digitalWrite(WATER_STOP_VALVE_PIN, LOW);
+    waterState = true;
   }
 }
 
@@ -729,6 +758,7 @@ void checkForWaterLeak() {
 
   // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
+  waterState = true;
 }
 
 //
@@ -738,6 +768,7 @@ void checkForWaterLeak() {
 void alarmWaterShutoff() {
 
   digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
+  waterState = true;
 }
 
 //
