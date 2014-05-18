@@ -722,7 +722,7 @@ void checkForWaterLeak() {
       return;
     }
     // If all samples are within +-1 of the first sample, shut off water
-    else if ( waterPulsesHistory[i] >= firstWaterPulse-1 && waterPulsesHistory[i] <= firstWaterPulse+1) ) {
+    else if ( waterPulsesHistory[i] >= firstWaterPulse-1 && waterPulsesHistory[i] <= firstWaterPulse+1 ) {
       return;
     }
   }
