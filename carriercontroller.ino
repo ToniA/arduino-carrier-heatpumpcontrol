@@ -191,6 +191,7 @@ void setup()
     lcd.print(owbuses[i].name);
     lcd.setCursor(0, 1);
     lcd.print("laitteita: "); // 'devices'
+
     Serial.print(F("VÃ¤ylÃ¤ssÃ¤ ")); // 'In bus'
     Serial.print(owbuses[i].name);
     Serial.print(F(" on ")); // 'there is'
@@ -200,6 +201,8 @@ void setup()
     Serial.print(deviceCount);
     Serial.println(" laitetta"); // 'devices'
     lcd.print(deviceCount);
+    lcd.print(" kpl");
+
     delay(1000);
   }
 
@@ -280,6 +283,7 @@ void updateDisplay()
     lcd.print(owbuses[displayedSensor].name);
     lcd.setCursor(0, 1);
     lcd.print(owbuses[displayedSensor].temperature);
+    lcd.print(" \xDF""C");
 
     // And the same on debug display
     Serial.print(owbuses[displayedSensor].name);
@@ -297,14 +301,17 @@ void updateDisplay()
       lcd.print("ILP l\xE1mmitt\xE1\xE1:");
       lcd.setCursor(0, 1);
       lcd.print(owbuses[9].temperature - owbuses[8].temperature);
+      lcd.print(" \xDF""C");
     } else if (carrierHeatpump.operatingMode == MODE_COOL) {
       lcd.print("ILP j\xE1\xE1hdytt\xE1\xE1:");
       lcd.setCursor(0, 1);
       lcd.print(owbuses[8].temperature - owbuses[9].temperature);
+      lcd.print(" \xDF""C");
     } else {
       lcd.print("ILP puhaltaa:");
       lcd.setCursor(0, 1);
       lcd.print(owbuses[9].temperature);
+      lcd.print(" \xDF""C");
     }
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 2)) {
@@ -360,6 +367,62 @@ void updateDisplay()
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 4)) {
     // CO2 level
     lcd.clear();
+    lcd.print("CO-taso");
+
+    lcd.setCursor(0, 1);
+    lcd.print(MQ7COLevel);
+    // lcd.print(" ppm"); // This is certainly not ppm's. I don't know what unit this number stands for
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 5)) {
+    // Humidity sensor level
+    lcd.clear();
+    lcd.print("Ilmankosteus");
+
+    lcd.setCursor(0, 1);
+    lcd.print(DHT11Humidity);
+    lcd.print(" %");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 6)) {
+    // Ventilation machine waste air in sensor level
+    lcd.clear();
+    lcd.print("Sis\xE1ilma LTO");
+
+    lcd.setCursor(0, 1);
+    lcd.print(DHT11Temperature);
+    lcd.print(" \xDF""C");
+
+    displayedSensor++;
+ } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
+    // water state mode display
+    lcd.clear();
+    lcd.print("Vedensulku");
+    if (waterState == LOW) {
+    lcd.setCursor(0, 1);
+    lcd.print("ON");
+    } else {
+    lcd.setCursor(0, 1);
+    lcd.print("OFF");
+    }
+
+    displayedSensor++;
+ } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 9)) {
+    // alarm State mode display
+    lcd.clear();
+    lcd.print("h\xE1lytin");
+    if (alarmState == LOW) {
+    lcd.setCursor(0, 1);
+    lcd.print("ON");
+    } else {
+    lcd.setCursor(0, 1);
+    lcd.print("OFF");
+    }
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 10)) {
+    // CO2 level
+    lcd.clear();
     lcd.print("CO2-taso");
 
     lcd.setCursor(0, 1);
@@ -410,31 +473,22 @@ void controlCarrier()
 
   // Heatpump control
   // Set the mode based on the outdoor temperature (summer cooling)
-
-  if (outdoor >=24 && outdoor < 25) {
+  if (outdoor >=23) {
     // COOL with AUTO FAN, +24
     operatingMode = MODE_COOL;
     temperature = 26;
     fanSpeed = FAN_AUTO;
-  } else if (outdoor >= 25 && outdoor < 26) {
-    // COOL with AUTO FAN, +24
-    operatingMode = MODE_COOL;
-    temperature = 25;
-    fanSpeed = FAN_AUTO;
-  } else if (outdoor >= 26 && outdoor < 27) {
-    // COOL with AUTO FAN, +24
-    operatingMode = MODE_COOL;
-    temperature = 24;
-    fanSpeed = FAN_AUTO;
-  } else if (outdoor >= 27) {
-    // COOL with AUTO FAN, +24
-    operatingMode = MODE_COOL;
-    temperature = 24;
-    fanSpeed = FAN_AUTO;
+
+    if (outdoor >= 24 && outdoor < 25) {
+      temperature = 25;
+    } else if (outdoor >= 25 && outdoor < 26) {
+      temperature = 24;
+    } else if (outdoor >= 26) {
+      temperature = 24;
+    }
 
   // Fireplace is hot, use the FAN mode
-  } else {
-  if (fireplace > 25) {
+  } else if (fireplace > 25) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
@@ -496,41 +550,34 @@ void controlCarrier()
   // Fireplace or utility or kitchen room is not hot,
   // Set the mode based on the outdoor temperature (heating)
   } else {
-    } if (outdoor >= 5 && outdoor < 15) {
+    // HEAT with AUTO FAN, +22
+    operatingMode = MODE_HEAT;
+    temperature = 22;
+    fanSpeed = FAN_AUTO;
+
+    if (outdoor >= 15 && outdoor < 20) {
       // HEAT with AUTO FAN, +23
-      operatingMode = MODE_HEAT;
       temperature = 23;
-      fanSpeed = FAN_AUTO;
+    } else if (outdoor >= 5 && outdoor < 15) {
+      // HEAT with AUTO FAN, +23
+      temperature = 23;
     } else if (outdoor >= 0 && outdoor < 5) {
-      operatingMode = MODE_HEAT;
       temperature = 23;
-      fanSpeed = FAN_AUTO;
     } else if (outdoor >= -4 && outdoor < 0) {
-      operatingMode = MODE_HEAT;
       temperature = 24;
-      fanSpeed = FAN_AUTO;
     } else if (outdoor >= -9 && outdoor < -4) {
-      operatingMode = MODE_HEAT;
       temperature = 25;
-      fanSpeed = FAN_AUTO;
     } else if (outdoor >= -14 && outdoor < -9) {
-      operatingMode = MODE_HEAT;
       temperature = 26;
-      fanSpeed = FAN_AUTO;
     } else if (outdoor >= -19 && outdoor < -14) {
-      operatingMode = MODE_HEAT;
       temperature = 27;
-      fanSpeed = FAN_AUTO;
     } else if (outdoor >= -24 && outdoor < -19) {
-      operatingMode = MODE_HEAT;
       temperature = 28;
-      fanSpeed = FAN_AUTO;
     } else if (outdoor >= -40 && outdoor < -24) {
-      operatingMode = MODE_HEAT;
       temperature = 30;
-      fanSpeed = FAN_AUTO;
     }
   }
+
 
   // Did any of the values change? If so, send an IR command
   if (operatingMode != carrierHeatpump.operatingMode ||
@@ -635,10 +682,10 @@ void updateEmoncms() {
     }
      // Log the water state
     client.print(",water_state:");
-    if ( waterState == true ) {
-      client.print("1");
-    } else {
+    if ( waterState == LOW ) {
       client.print("0");
+    } else {
+      client.print("1");
     }
 
     client.println("} HTTP/1.1");
@@ -728,7 +775,7 @@ void checkForWaterUse() {
        waterPulsesHistory[2] > 14 ) {
     // Water leak - shut off water
     digitalWrite(WATER_STOP_VALVE_PIN, LOW);
-    waterState = true;
+    waterState = LOW;
   }
 }
 
@@ -758,7 +805,7 @@ void checkForWaterLeak() {
 
   // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
-  waterState = true;
+  waterState = LOW;
 }
 
 //
@@ -768,7 +815,7 @@ void checkForWaterLeak() {
 void alarmWaterShutoff() {
 
   digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
-  waterState = true;
+  waterState = alarmState;
 }
 
 //
