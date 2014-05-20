@@ -38,13 +38,13 @@ OneWire ow1(38);
 DallasTemperature owsensors1(&ow1);
 OneWire ow2(34);
 DallasTemperature owsensors2(&ow2);
-OneWire ow3(36);
+OneWire ow3(31);
 DallasTemperature owsensors3(&ow3);
-OneWire ow4(32);
+OneWire ow4(33);
 DallasTemperature owsensors4(&ow4);
-OneWire ow5(26);
+OneWire ow5(21);
 DallasTemperature owsensors5(&ow5);
-OneWire ow6(28);
+OneWire ow6(24);
 DallasTemperature owsensors6(&ow6);
 OneWire ow7(42);
 DallasTemperature owsensors7(&ow7);
@@ -56,17 +56,17 @@ OneWire ow10(43);
 DallasTemperature owsensors10(&ow10);
 OneWire ow11(41);
 DallasTemperature owsensors11(&ow11);
-OneWire ow12(24);
+OneWire ow12(37);
 DallasTemperature owsensors12(&ow12);
-OneWire ow13(37);
+OneWire ow13(23);
 DallasTemperature owsensors13(&ow13);
-OneWire ow14(23);
+OneWire ow14(36);
 DallasTemperature owsensors14(&ow14);
-OneWire ow15(31);
+OneWire ow15(32);
 DallasTemperature owsensors15(&ow15);
-OneWire ow16(33);
+OneWire ow16(26);
 DallasTemperature owsensors16(&ow16);
-OneWire ow17(21);
+OneWire ow17(28);
 DallasTemperature owsensors17(&ow17);
 
 // Structure to hold them
@@ -81,24 +81,24 @@ struct owbus
 
 // and the array
 owbus owbuses[] = {
-  {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takka"},                 // Fireplace
-  {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},              // Kitchen
-  {owsensors2, DEVICE_DISCONNECTED, "utl_room", "KHH"},                    // Utility room
-  {owsensors12,DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},                // Outdoor air
-  {owsensors15,DEVICE_DISCONNECTED, "bedroom", "Julian huone"},            // bedroom
-  {owsensors16,DEVICE_DISCONNECTED, "master_bedroom", "Makuuhuone"},       // Master bedroom
-  {owsensors17,DEVICE_DISCONNECTED, "warehouse", "Varasto"},               // warehouse
-  {owsensors3, DEVICE_DISCONNECTED, "vent_outdoor", "LTO ulkoilma"},       // Ventilation machine fresh air in
-  {owsensors4, DEVICE_DISCONNECTED, "vent_fresh", "LTO tulokenno"},        // Ventilation machine fresh air out
-  {owsensors5, DEVICE_DISCONNECTED, "vent_dirty", "LTO sis\xE1ilma"},      // Ventilation machine waste air in
-  {owsensors6, DEVICE_DISCONNECTED, "vent_waste", "LTO poistoilma"},       // Ventilation machine waste air out
-  {owsensors7, DEVICE_DISCONNECTED, "aircond_intake", "ILP imuilma"},      // Carrier intake air
-  {owsensors8, DEVICE_DISCONNECTED, "aircond_out", "ILP puhallusilma"},    // Carrier blowing air
-  {owsensors9, DEVICE_DISCONNECTED, "aircond_hotpipe", "ILP kuumakaasu"},  // Carrier hot gas pipe
-  {owsensors10,DEVICE_DISCONNECTED, "boiler_mid", "Kuumavesivar.keski"},   // Hot water boiler middle
-  {owsensors11,DEVICE_DISCONNECTED, "boiler_top", "Kuumavesivar.yl\xE1"},  // Hot water boiler up
-  {owsensors13,DEVICE_DISCONNECTED, "hot_water", "Kuumavesi"},             // Hot water
-  {owsensors14,DEVICE_DISCONNECTED, "water", "Vesi"}                       // Cold Water
+  {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takka"},                // Fireplace
+  {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},             // Kitchen
+  {owsensors2, DEVICE_DISCONNECTED, "utl_room", "KHH"},                   // Utility room
+  {owsensors3, DEVICE_DISCONNECTED, "bedroom", "Julian huone"},           // Bedroom
+  {owsensors4, DEVICE_DISCONNECTED, "master_bedroom", "Makuuhuone"},      // Master bedroom
+  {owsensors5, DEVICE_DISCONNECTED, "warehouse", "Varasto"},              // Warehouse
+  {owsensors6, DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},               // Outdoor air
+  {owsensors7, DEVICE_DISCONNECTED, "aircond_intake", "ILP imuilma"},     // Carrier intake air
+  {owsensors8, DEVICE_DISCONNECTED, "aircond_out", "ILP puhallusilma"},   // Carrier outlet air
+  {owsensors9, DEVICE_DISCONNECTED, "aircond_hotpipe", "ILP kuumakaasu"}, // Carrier hot gas pipe
+  {owsensors10,DEVICE_DISCONNECTED, "boiler_mid", "Kuumavesivar.keski"},  // Hot water boiler middle
+  {owsensors11,DEVICE_DISCONNECTED, "boiler_top", "Kuumavesivar.yl\xE1"}, // Hot water boiler up
+  {owsensors12,DEVICE_DISCONNECTED, "hot_water", "Kuumavesi"},            // Hot water
+  {owsensors13,DEVICE_DISCONNECTED, "water", "Vesi"},                     // Cold Water
+  {owsensors14,DEVICE_DISCONNECTED, "vent_outdoor", "LTO ulkoilma"},      // Ventilation machine fresh air in
+  {owsensors15,DEVICE_DISCONNECTED, "vent_fresh", "LTO tulokenno"},       // Ventilation machine fresh air out
+  {owsensors16,DEVICE_DISCONNECTED, "vent_dirty", "LTO sis\xE1ilma"},     // Ventilation machine waste air in
+  {owsensors17,DEVICE_DISCONNECTED, "vent_waste", "LTO poistoilma"}       // Ventilation machine waste air out
 };
 
 
@@ -146,6 +146,9 @@ float MG811Voltage = 0.0;
 
 // Alarm state
 int alarmState;
+
+// test
+int test;
 
 // Water state
 bool waterState;
@@ -285,12 +288,33 @@ void updateDisplay()
     lcd.print(owbuses[displayedSensor].temperature);
     lcd.print(" \xDF""C");
 
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 1)) {
+    // Ventilation machine waste air in sensor level
+    lcd.clear();
+    lcd.print("Sis\xE1ilma LTO");
+
+    lcd.setCursor(0, 1);
+    lcd.print(DHT11Temperature);
+    lcd.print(" \xDF""C");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 2)) {
+    // Humidity sensor level
+    lcd.clear();
+    lcd.print("Ilmankosteus");
+
+    lcd.setCursor(0, 1);
+    lcd.print(DHT11Humidity);
+    lcd.print(" %");
+
+
     // And the same on debug display
     Serial.print(owbuses[displayedSensor].name);
     Serial.print(F(": "));
     Serial.println(owbuses[displayedSensor].temperature);
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 1)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 3)) {
     // Heatpump temperature difference
     Serial.print("ILP lÃ¤mpenemÃ¤: ");
     Serial.println(owbuses[9].temperature - owbuses[8].temperature);
@@ -314,7 +338,7 @@ void updateDisplay()
       lcd.print(" \xDF""C");
     }
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 2)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 4)) {
     // Mode display
     Serial.print("MODE: ");
     Serial.println(carrierHeatpump.operatingMode);
@@ -349,7 +373,7 @@ void updateDisplay()
       lcd.print(carrierHeatpump.fanSpeed);
     }
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 3)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 5)) {
     // Fireplace mode display
     lcd.clear();
     lcd.print("Takkapuhallin");
@@ -364,7 +388,7 @@ void updateDisplay()
       Serial.println("Fireplace fan: OFF");
     }
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 4)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 6)) {
     // CO2 level
     lcd.clear();
     lcd.print("CO-taso");
@@ -373,28 +397,9 @@ void updateDisplay()
     lcd.print(MQ7COLevel);
     // lcd.print(" ppm"); // This is certainly not ppm's. I don't know what unit this number stands for
 
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 5)) {
-    // Humidity sensor level
-    lcd.clear();
-    lcd.print("Ilmankosteus");
-
-    lcd.setCursor(0, 1);
-    lcd.print(DHT11Humidity);
-    lcd.print(" %");
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 6)) {
-    // Ventilation machine waste air in sensor level
-    lcd.clear();
-    lcd.print("Sis\xE1ilma LTO");
-
-    lcd.setCursor(0, 1);
-    lcd.print(DHT11Temperature);
-    lcd.print(" \xDF""C");
-
-    displayedSensor++;
- } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
+ } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 7)) {
     // water state mode display
     lcd.clear();
     lcd.print("Vedensulku");
@@ -407,7 +412,7 @@ void updateDisplay()
     }
 
     displayedSensor++;
- } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 9)) {
+ } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
     // alarm State mode display
     lcd.clear();
     lcd.print("h\xE1lytin");
@@ -420,7 +425,7 @@ void updateDisplay()
     }
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 10)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 9)) {
     // CO2 level
     lcd.clear();
     lcd.print("CO2-taso");
@@ -430,7 +435,7 @@ void updateDisplay()
     lcd.print(" ppm");
 
     displayedSensor++;
-  } else {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 10)) {
     // CO2 sensor voltage
     lcd.clear();
     lcd.print("CO2 j\xE1nnite");
@@ -438,6 +443,64 @@ void updateDisplay()
     lcd.setCursor(0, 1);
     lcd.print(MG811Voltage);
     lcd.print(" V");
+
+    // Test
+    displayedSensor++;
+    // Test
+    lcd.clear();
+    lcd.print("Muuttujat");
+    lcd.setCursor(0, 1);
+    lcd.print("ILP ohjelmaan");
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 11)) {
+    // Test
+    int outdoor = owbuses[14].temperature;
+
+    // Outdoor
+    lcd.clear();
+    lcd.print("outdoor");
+
+    lcd.setCursor(0, 1);
+    lcd.print(outdoor);
+    lcd.print(" \xDF""C");
+
+    displayedSensor++;
+   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 12)) {
+    // Test
+    int fireplace = owbuses[0].temperature;
+
+    // Fireplace
+    lcd.clear();
+    lcd.print("fireplace");
+
+    lcd.setCursor(0, 1);
+    lcd.print(fireplace);
+    lcd.print(" \xDF""C");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 13)) {
+    // Test
+    int utility = owbuses[2].temperature;
+
+    // Utility
+    lcd.clear();
+    lcd.print("utility");
+
+    lcd.setCursor(0, 1);
+    lcd.print(utility);
+    lcd.print(" \xDF""C");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 14)) {
+    // Test
+    int kitchen = owbuses[1].temperature;
+
+    // Kitchen
+    lcd.clear();
+    lcd.print("kitchen");
+
+    lcd.setCursor(0, 1);
+    lcd.print(kitchen);
+    lcd.print(" \xDF""C");
 
     displayedSensor = 0;
   }
@@ -453,7 +516,7 @@ void controlCarrier()
   int fanSpeed = 0;
   int temperature = 23;
 
-  int outdoor = owbuses[3].temperature;
+  int outdoor = owbuses[14].temperature;
   int fireplace = owbuses[0].temperature;
   int utility = owbuses[2].temperature;
   int kitchen = owbuses[1].temperature;
@@ -470,20 +533,19 @@ void controlCarrier()
     carrierHeatpump.fireplaceFan = true;
   }
 
-
   // Heatpump control
   // Set the mode based on the outdoor temperature (summer cooling)
-  if (outdoor >=23) {
+  if (outdoor >=22) {
     // COOL with AUTO FAN, +24
     operatingMode = MODE_COOL;
     temperature = 26;
     fanSpeed = FAN_AUTO;
 
-    if (outdoor >= 24 && outdoor < 25) {
+    if (outdoor >= 23 && outdoor < 24) {
       temperature = 25;
-    } else if (outdoor >= 25 && outdoor < 26) {
+    } else if (outdoor >= 24 && outdoor < 25) {
       temperature = 24;
-    } else if (outdoor >= 26) {
+    } else if (outdoor >= 25) {
       temperature = 24;
     }
 
@@ -740,15 +802,15 @@ void readMQ7() {
 //
 void readMG811() {
   // Sensor Calibration Constants
-  const float v400ppm = 2.72; //MUST BE SET ACCORDING TO CALIBRATION ->  FREE AIR 2.84      2.72 18.05.2014
-  const float v40000ppm = 1.30; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87     1.30 18.05.2014
+  const float v400ppm = 2.72;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84 2.72 19.05.2014
+  const float v40000ppm = 1.00; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87 1.00 19.05.2014
   const float deltavs = v400ppm - v40000ppm;
   const float A = deltavs/(log10(400) - log10(40000));
   const float B = log10(400);
 
   // Read co2 data from sensor
   int data = analogRead(MG811_PIN); //digitise output from c02 sensor
-  MG811Voltage = data/204.6;       //convert output to voltage
+  MG811Voltage = data/204.6;        //convert output to voltage
 
   // Calculate co2 from log10 formula (see sensor datasheet)
   float power = ((MG811Voltage - v400ppm)/A) + B;
