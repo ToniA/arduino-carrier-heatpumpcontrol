@@ -84,10 +84,10 @@ owbus owbuses[] = {
   {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takka"},                 // Fireplace
   {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},              // Kitchen
   {owsensors2, DEVICE_DISCONNECTED, "utl_room", "KHH"},                    // Utility room
+  {owsensors12,DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},                // Outdoor air
   {owsensors15,DEVICE_DISCONNECTED, "bedroom", "Julian huone"},            // bedroom
   {owsensors16,DEVICE_DISCONNECTED, "master_bedroom", "Makuuhuone"},       // Master bedroom
   {owsensors17,DEVICE_DISCONNECTED, "warehouse", "Varasto"},               // warehouse
-  {owsensors12,DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},                // Outdoor air
   {owsensors3, DEVICE_DISCONNECTED, "vent_outdoor", "LTO ulkoilma"},       // Ventilation machine fresh air in
   {owsensors4, DEVICE_DISCONNECTED, "vent_fresh", "LTO tulokenno"},        // Ventilation machine fresh air out
   {owsensors5, DEVICE_DISCONNECTED, "vent_dirty", "LTO sis\xE1ilma"},      // Ventilation machine waste air in
