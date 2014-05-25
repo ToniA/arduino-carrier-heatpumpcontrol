@@ -146,12 +146,14 @@ float MG811Voltage = 0.0;
 
 // Alarm state
 int alarmState;
+int alarmStateHistory;
 
 // test
 int test;
 
 // Water state
 bool waterState;
+bool waterLeak;
 
 void setup()
 {
@@ -397,35 +399,44 @@ void updateDisplay()
     lcd.print(MQ7COLevel);
     // lcd.print(" ppm"); // This is certainly not ppm's. I don't know what unit this number stands for
 
-
     displayedSensor++;
- } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 7)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 7)) {
     // water state mode display
     lcd.clear();
     lcd.print("Vedensulku");
+    lcd.setCursor(0, 1);
     if (waterState == LOW) {
-    lcd.setCursor(0, 1);
-    lcd.print("ON");
+      lcd.print("ON");
     } else {
-    lcd.setCursor(0, 1);
-    lcd.print("OFF");
+      lcd.print("OFF");
     }
 
     displayedSensor++;
- } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
-    // alarm State mode display
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
+    // water leak mode display
     lcd.clear();
-    lcd.print("h\xE1lytin");
-    if (alarmState == LOW) {
+    lcd.print("Vuototesti");
     lcd.setCursor(0, 1);
-    lcd.print("ON");
+    if (waterLeak == true) {
+      lcd.print("Vesivuoto");
     } else {
-    lcd.setCursor(0, 1);
-    lcd.print("OFF");
+      lcd.print("OK");
     }
 
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 9)) {
+    // alarm State mode display
+    lcd.clear();
+    lcd.print("h\xE1lytin");
+    lcd.setCursor(0, 1);
+    if (alarmState == LOW) {
+      lcd.print("ON");
+    } else {
+      lcd.print("OFF");
+    }
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 10)) {
     // CO2 level
     lcd.clear();
     lcd.print("CO2-taso");
@@ -435,7 +446,7 @@ void updateDisplay()
     lcd.print(" ppm");
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 10)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 11)) {
     // CO2 sensor voltage
     lcd.clear();
     lcd.print("CO2 j\xE1nnite");
@@ -451,7 +462,7 @@ void updateDisplay()
     lcd.print("Muuttujat");
     lcd.setCursor(0, 1);
     lcd.print("ILP ohjelmaan");
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 11)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 12)) {
     // Test
     int outdoor = owbuses[14].temperature;
 
@@ -464,7 +475,7 @@ void updateDisplay()
     lcd.print(" \xDF""C");
 
     displayedSensor++;
-   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 12)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 13)) {
     // Test
     int fireplace = owbuses[0].temperature;
 
@@ -477,7 +488,7 @@ void updateDisplay()
     lcd.print(" \xDF""C");
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 13)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 14)) {
     // Test
     int utility = owbuses[2].temperature;
 
@@ -490,7 +501,7 @@ void updateDisplay()
     lcd.print(" \xDF""C");
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 14)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 15)) {
     // Test
     int kitchen = owbuses[1].temperature;
 
@@ -535,28 +546,25 @@ void controlCarrier()
 
   // Heatpump control
   // Set the mode based on the outdoor temperature (summer cooling)
-  if (outdoor >=22) {
-    // COOL with AUTO FAN, +24
+  if (outdoor >= 22) {
+    //COOL with AUTO FAN, +25
     operatingMode = MODE_COOL;
-    temperature = 26;
+    temperature = 25;
     fanSpeed = FAN_AUTO;
 
-    if (outdoor >= 23 && outdoor < 24) {
-      temperature = 25;
-    } else if (outdoor >= 24 && outdoor < 25) {
-      temperature = 24;
-    } else if (outdoor >= 25) {
-      temperature = 24;
+    if (outdoor >= 23) {
+     //COOL with AUTO FAN, +24
+     temperature = 24;
     }
 
   // Fireplace is hot, use the FAN mode
-  } else if (fireplace > 25) {
+  } else if (fireplace >= 24) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
 
-    if (fireplace >= 26 && fireplace < 27) {
+    if (fireplace >= 25 && fireplace < 27) {
       fanSpeed = FAN_2;
     } else if (fireplace >= 27 && fireplace < 29) {
       fanSpeed = FAN_3;
@@ -566,53 +574,57 @@ void controlCarrier()
       fanSpeed = FAN_5;
     }
   // Utility room is hot, as the laundry drier has been running
-  } else if (utility > 23.5 ) {
+  } else if ( utility >= 23) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
 
-    if (utility >= 24 && utility < 24.5) {
+    if (utility >= 24 && utility < 25) {
       fanSpeed = FAN_2;
-    } else if ( utility >= 24.5 && utility < 25) {
+    } else if ( utility >= 25 && utility < 26) { 
       fanSpeed = FAN_3;
-    } else if ( utility >= 25 && utility < 25.5) {
+    } else if ( utility >= 26 && utility < 27) {
       fanSpeed = FAN_4;
-    } else if ( utility >= 25.5 && utility < 26) {
-      fanSpeed = FAN_5;
 
-    } else if (utility >= 26) {
+    } else if (utility >= 27) {
       // COOL with AUTO FAN, +24
       operatingMode = MODE_COOL;
       temperature = 24;
       fanSpeed = FAN_AUTO;
     }
+
   // Kitchen is hot, as the oven has been running
-  } else if (kitchen > 23.5 ) {
+  } else if (kitchen >= 23) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
 
-    if (kitchen >= 24 && kitchen < 24.5) {
+    if (kitchen >= 24 && kitchen < 25) {
       fanSpeed = FAN_2;
-    } else if ( kitchen >= 24.5 && kitchen < 25) {
+    } else if ( kitchen >= 25 && kitchen < 26) {
       fanSpeed = FAN_3;
-    } else if ( kitchen >= 25 && kitchen < 25.5) {
+    } else if ( kitchen >= 26 && kitchen < 27) {
       fanSpeed = FAN_4;
-    } else if ( kitchen >= 25.5 && kitchen < 26) {
-      fanSpeed = FAN_5;
 
-    } else if (kitchen >= 26) {
+    } else if (kitchen >= 27) {
       // COOL with AUTO FAN, +24
       operatingMode = MODE_COOL;
       temperature = 24;
       fanSpeed = FAN_AUTO;
     }
-  // Fireplace or utility or kitchen room is not hot,
+
+  // Fireplace or utility or kitchen room is not hot
+  } else if (outdoor >= 21 && outdoor < 22) {
+    // MODE_FAN with FAN_AUTO disable COOL and HEAT replacement all the time
+    operatingMode = MODE_FAN;
+    temperature = 22;
+    fanSpeed = FAN_AUTO;
+
   // Set the mode based on the outdoor temperature (heating)
-  } else {
-    // HEAT with AUTO FAN, +22
+  } else if (outdoor >= 20 && outdoor < 21) {
+    // FAN with FAN 1 temp+22
     operatingMode = MODE_HEAT;
     temperature = 22;
     fanSpeed = FAN_AUTO;
@@ -749,6 +761,13 @@ void updateEmoncms() {
     } else {
       client.print("1");
     }
+    // Log the leak state
+    client.print(",waterLeak_state:");
+    if ( waterLeak == true ) {
+      client.print("0");
+    } else {
+      client.print("1");
+    }
 
     client.println("} HTTP/1.1");
     client.println("Host: 192.168.0.15");
@@ -802,8 +821,8 @@ void readMQ7() {
 //
 void readMG811() {
   // Sensor Calibration Constants
-  const float v400ppm = 2.72;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84 2.72 19.05.2014
-  const float v40000ppm = 1.00; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87 1.00 19.05.2014
+  const float v400ppm = 2.68;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84 2.68 23.05.2014
+  const float v40000ppm = 1.00; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87 1.00 23.05.2014
   const float deltavs = v400ppm - v40000ppm;
   const float A = deltavs/(log10(400) - log10(40000));
   const float B = log10(400);
@@ -824,7 +843,7 @@ void readMG811() {
 void checkForWaterShutoff() {
   checkForWaterUse();
   checkForShowerWaterUse();
-  checkForWaterLeak();
+  checkForwaterLeak();
 }
 
 //
@@ -838,6 +857,7 @@ void checkForWaterUse() {
     // Water leak - shut off water
     digitalWrite(WATER_STOP_VALVE_PIN, LOW);
     waterState = LOW;
+    waterLeak = true;
   }
 }
 
@@ -850,7 +870,7 @@ void checkForShowerWaterUse() {
 //
 // Check if the water valve needs to be shut due to a leak - same amount of water use for 12 minutes
 //
-void checkForWaterLeak() {
+void checkForwaterLeak() {
 
   int firstWaterPulse = waterPulsesHistory[0];
 
@@ -859,8 +879,8 @@ void checkForWaterLeak() {
     if ( waterPulsesHistory[i] == 0 ) {
       return;
     }
-    // If all samples are within +-1 of the first sample, shut off water
-    else if ( waterPulsesHistory[i] >= firstWaterPulse-1 && waterPulsesHistory[i] <= firstWaterPulse+1 ) {
+    // If all samples are within +-3 of the first sample, shut off water
+    else if ( waterPulsesHistory[i] >= firstWaterPulse-3 && waterPulsesHistory[i] <= firstWaterPulse+3 ) {
       return;
     }
   }
@@ -868,6 +888,7 @@ void checkForWaterLeak() {
   // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
   waterState = LOW;
+  waterLeak = true;
 }
 
 //
@@ -876,8 +897,18 @@ void checkForWaterLeak() {
 //
 void alarmWaterShutoff() {
 
-  digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
-  waterState = alarmState;
+  if ( alarmState != alarmStateHistory ) {
+    digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
+    waterState = alarmState;
+  } else if ( waterLeak == true ) {
+    digitalWrite(WATER_STOP_VALVE_PIN, LOW);
+    waterState = LOW;
+  } else {
+    digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
+    waterState = alarmState;
+  }
+
+  alarmStateHistory = alarmState;
 }
 
 //
