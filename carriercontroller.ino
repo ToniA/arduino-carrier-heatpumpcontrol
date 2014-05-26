@@ -153,7 +153,7 @@ int test;
 
 // Water state
 bool waterState;
-bool waterLeak;
+bool waterLeakState;
 
 void setup()
 {
@@ -179,7 +179,7 @@ void setup()
 
   // Default mode for the Water stop is OFF
   digitalWrite(WATER_STOP_VALVE_PIN, HIGH); // Water stop to OFF state, i.e. water flows
-  
+
   // Relay in the warehouse
   pinMode(WAREHOUSE_RELAY_PIN, OUTPUT);
 
@@ -188,6 +188,9 @@ void setup()
 
   // Alarm state is an input pin
   pinMode(ALARM_STATE_PIN, INPUT_PULLUP);
+
+  // waterLeak state is false
+  waterLeakState == false;
 
   // List OneWire devices
   for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++)
@@ -413,11 +416,11 @@ void updateDisplay()
 
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
-    // water leak mode display
+    // water Leak State mode display
     lcd.clear();
     lcd.print("Vuototesti");
     lcd.setCursor(0, 1);
-    if (waterLeak == true) {
+    if (waterLeakState == true) {
       lcd.print("Vesivuoto");
     } else {
       lcd.print("OK");
@@ -450,68 +453,190 @@ void updateDisplay()
     // CO2 sensor voltage
     lcd.clear();
     lcd.print("CO2 j\xE1nnite");
-
     lcd.setCursor(0, 1);
     lcd.print(MG811Voltage);
     lcd.print(" V");
 
     // Test
     displayedSensor++;
-    // Test
     lcd.clear();
     lcd.print("Muuttujat");
     lcd.setCursor(0, 1);
     lcd.print("ILP ohjelmaan");
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 12)) {
-    // Test
-    int outdoor = owbuses[14].temperature;
+
+ } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 12)) {
+   int aircond_intake = owbuses[7].temperature;
+
+    // aircond_intake
+    lcd.clear();
+    lcd.print("aircond intake");
+    lcd.setCursor(0, 1);
+    lcd.print(aircond_intake);
+    lcd.print(" \xDF""C");
+
+    displayedSensor++;
+ } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 13)) {
+   int outdoor = owbuses[14].temperature;
 
     // Outdoor
     lcd.clear();
     lcd.print("outdoor");
-
     lcd.setCursor(0, 1);
     lcd.print(outdoor);
     lcd.print(" \xDF""C");
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 13)) {
-    // Test
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 14)) {
     int fireplace = owbuses[0].temperature;
 
     // Fireplace
     lcd.clear();
     lcd.print("fireplace");
-
     lcd.setCursor(0, 1);
     lcd.print(fireplace);
     lcd.print(" \xDF""C");
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 14)) {
-    // Test
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 15)) {
     int utility = owbuses[2].temperature;
 
     // Utility
     lcd.clear();
     lcd.print("utility");
-
     lcd.setCursor(0, 1);
     lcd.print(utility);
     lcd.print(" \xDF""C");
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 15)) {
-    // Test
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 16)) {
     int kitchen = owbuses[1].temperature;
 
     // Kitchen
     lcd.clear();
     lcd.print("kitchen");
-
     lcd.setCursor(0, 1);
     lcd.print(kitchen);
     lcd.print(" \xDF""C");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 17)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 1");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[1]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 18)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 2");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[2]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 19)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 3");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[3]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 20)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 4");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[4]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 21)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 5");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[5]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 22)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 6");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[6]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 23)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 7");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[7]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 24)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 8");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[8]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 25)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 9");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[9]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 26)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 10");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[10]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 27)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 11");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[11]);
+    lcd.print(" Litraa");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 28)) {
+
+    // waterPulsesHistory
+    lcd.clear();
+    lcd.print("waterPulsesHistory 12");
+    lcd.setCursor(0, 1);
+    lcd.print(waterPulsesHistory[12]);
+    lcd.print(" Litraa");
 
     displayedSensor = 0;
   }
@@ -527,6 +652,7 @@ void controlCarrier()
   int fanSpeed = 0;
   int temperature = 23;
 
+  int aircond_intake = owbuses[7].temperature;
   int outdoor = owbuses[14].temperature;
   int fireplace = owbuses[0].temperature;
   int utility = owbuses[2].temperature;
@@ -546,31 +672,35 @@ void controlCarrier()
 
   // Heatpump control
   // Set the mode based on the outdoor temperature (summer cooling)
-  if (outdoor >= 22) {
+  if (outdoor >= 20 && aircond_intake >= 24) {
+    operatingMode = MODE_COOL;
+    temperature = 24;
+    fanSpeed = FAN_AUTO;
+
+  } else if (outdoor >= 22 && aircond_intake >= 23) {
     //COOL with AUTO FAN, +25
     operatingMode = MODE_COOL;
     temperature = 25;
     fanSpeed = FAN_AUTO;
 
-    if (outdoor >= 23) {
-     //COOL with AUTO FAN, +24
-     temperature = 24;
+    if (outdoor >= 23 && aircond_intake >= 23) {
+      //COOL with AUTO FAN, +24
+      temperature = 24;
     }
-
   // Fireplace is hot, use the FAN mode
-  } else if (fireplace >= 24) {
+  } else if (fireplace >= 25) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
 
-    if (fireplace >= 25 && fireplace < 27) {
+    if (fireplace >= 26 && fireplace < 28) {
       fanSpeed = FAN_2;
-    } else if (fireplace >= 27 && fireplace < 29) {
+    } else if (fireplace >= 28 && fireplace < 30) {
       fanSpeed = FAN_3;
-    } else if (fireplace >= 29 && fireplace < 32) {
+    } else if (fireplace >= 30 && fireplace < 33) {
       fanSpeed = FAN_4;
-    } else if ( fireplace >= 32) {
+    } else if ( fireplace >= 33) {
       fanSpeed = FAN_5;
     }
   // Utility room is hot, as the laundry drier has been running
@@ -582,12 +712,14 @@ void controlCarrier()
 
     if (utility >= 24 && utility < 25) {
       fanSpeed = FAN_2;
-    } else if ( utility >= 25 && utility < 26) { 
+    } else if ( utility >= 25 && utility < 26) {
       fanSpeed = FAN_3;
     } else if ( utility >= 26 && utility < 27) {
       fanSpeed = FAN_4;
+    } else if ( utility >= 26 && utility < 27 && outdoor < 20) {
+      fanSpeed = FAN_5;
 
-    } else if (utility >= 27) {
+    } else if (utility >= 27 && outdoor >= 20) {
       // COOL with AUTO FAN, +24
       operatingMode = MODE_COOL;
       temperature = 24;
@@ -607,8 +739,10 @@ void controlCarrier()
       fanSpeed = FAN_3;
     } else if ( kitchen >= 26 && kitchen < 27) {
       fanSpeed = FAN_4;
+    } else if ( kitchen >= 27 && kitchen < 28 && outdoor < 20) {
+      fanSpeed = FAN_5;
 
-    } else if (kitchen >= 27) {
+    } else if (kitchen >= 27 && outdoor >= 20) {
       // COOL with AUTO FAN, +24
       operatingMode = MODE_COOL;
       temperature = 24;
@@ -623,7 +757,7 @@ void controlCarrier()
     fanSpeed = FAN_AUTO;
 
   // Set the mode based on the outdoor temperature (heating)
-  } else if (outdoor >= 20 && outdoor < 21) {
+  } else {
     // FAN with FAN 1 temp+22
     operatingMode = MODE_HEAT;
     temperature = 22;
@@ -692,7 +826,7 @@ void updateEmoncms() {
   interrupts();
 
   // Update the water use history
-  for (byte i=0; i++; i<sizeof(waterPulsesHistory) / sizeof(int) - 1) {
+  for (byte i=0; i++; i<sizeof(waterPulsesHistory) / sizeof(int) - 2) {
     waterPulsesHistory[i+1] = waterPulsesHistory[i];
   }
   waterPulsesHistory[0] = emonWaterPulses;
@@ -747,6 +881,42 @@ void updateEmoncms() {
     // Log the MG811 readings
     client.print(",mg811_co2level:");
     client.print(MG811CO2Level);
+    client.print(waterPulsesHistory[1]);
+    // Log the waterPulsesHistory[1] readings
+    client.print(",waterPulsesHistory[1]:");
+    client.print(waterPulsesHistory[2]);
+    // Log the waterPulsesHistory[2] readings
+    client.print(",waterPulsesHistory[2]:");
+    client.print(waterPulsesHistory[3]);
+    // Log the waterPulsesHistory[3] readings
+    client.print(",waterPulsesHistory[3]:");
+    client.print(waterPulsesHistory[4]);
+    // Log the waterPulsesHistory[4] readings
+    client.print(",waterPulsesHistory[4]:");
+    client.print(waterPulsesHistory[5]);
+    // Log the waterPulsesHistory[5] readings
+    client.print(",waterPulsesHistory[5]:");
+    client.print(waterPulsesHistory[6]);
+    // Log the waterPulsesHistory[6] readings
+    client.print(",waterPulsesHistory[6]:");
+    client.print(waterPulsesHistory[7]);
+    // Log the waterPulsesHistory[7] readings
+    client.print(",waterPulsesHistory[7]:");
+    client.print(waterPulsesHistory[8]);
+    // Log the waterPulsesHistory[8] readings
+    client.print(",waterPulsesHistory[8]:");
+    client.print(waterPulsesHistory[9]);
+    // Log the waterPulsesHistory[9] readings
+    client.print(",waterPulsesHistory[9]:");
+    client.print(waterPulsesHistory[10]);
+    // Log the waterPulsesHistory[10] readings
+    client.print(",waterPulsesHistory[10]:");
+    client.print(waterPulsesHistory[11]);
+    // Log the waterPulsesHistory[11] readings
+    client.print(",waterPulsesHistory[11]:");
+    client.print(waterPulsesHistory[12]);
+    // Log the waterPulsesHistory[12] readings
+    client.print(",waterPulsesHistory[12]:");
     // Log the alarm state
     client.print(",alarm_state:");
     if ( alarmState == LOW ) {
@@ -763,12 +933,11 @@ void updateEmoncms() {
     }
     // Log the leak state
     client.print(",waterLeak_state:");
-    if ( waterLeak == true ) {
+    if ( waterLeakState == true ) {
       client.print("0");
     } else {
       client.print("1");
     }
-
     client.println("} HTTP/1.1");
     client.println("Host: 192.168.0.15");
     client.println("User-Agent: Arduino-ethernet");
@@ -821,8 +990,8 @@ void readMQ7() {
 //
 void readMG811() {
   // Sensor Calibration Constants
-  const float v400ppm = 2.68;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84 2.68 23.05.2014
-  const float v40000ppm = 1.00; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87 1.00 23.05.2014
+  const float v400ppm = 2.60;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84 2.60 26.05.2014
+  const float v40000ppm = 1.00; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87 1.00 25.05.2014
   const float deltavs = v400ppm - v40000ppm;
   const float A = deltavs/(log10(400) - log10(40000));
   const float B = log10(400);
@@ -857,7 +1026,7 @@ void checkForWaterUse() {
     // Water leak - shut off water
     digitalWrite(WATER_STOP_VALVE_PIN, LOW);
     waterState = LOW;
-    waterLeak = true;
+    waterLeakState = true;
   }
 }
 
@@ -874,7 +1043,7 @@ void checkForwaterLeak() {
 
   int firstWaterPulse = waterPulsesHistory[0];
 
-  for (byte i=1; i++; i<sizeof(waterPulsesHistory) / sizeof(int)) {
+  for (byte i=1; i++; i < ((sizeof(waterPulsesHistory) / sizeof(int)) - 1) {
     // It's not a leak if water isn't flowing
     if ( waterPulsesHistory[i] == 0 ) {
       return;
@@ -888,7 +1057,7 @@ void checkForwaterLeak() {
   // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
   waterState = LOW;
-  waterLeak = true;
+  waterLeakState = true;
 }
 
 //
@@ -900,10 +1069,10 @@ void alarmWaterShutoff() {
   if ( alarmState != alarmStateHistory ) {
     digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
     waterState = alarmState;
-  } else if ( waterLeak == true ) {
+  } else if (waterLeakState == true ) {
     digitalWrite(WATER_STOP_VALVE_PIN, LOW);
     waterState = LOW;
-  } else {
+  } else if (waterLeakState == false )  {
     digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
     waterState = alarmState;
   }
