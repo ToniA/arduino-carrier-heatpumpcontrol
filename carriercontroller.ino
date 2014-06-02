@@ -457,191 +457,48 @@ void updateDisplay()
     lcd.print(MG811Voltage);
     lcd.print(" V");
 
-    // Test
     displayedSensor++;
-    lcd.clear();
-    lcd.print("Muuttujat");
-    lcd.setCursor(0, 1);
-    lcd.print("ILP ohjelmaan");
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 12)) {
 
- } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 12)) {
-   int aircond_intake = owbuses[7].temperature;
-
-    // aircond_intake
+    // waterPulsesHistory
     lcd.clear();
-    lcd.print("aircond intake");
+    lcd.print("Veden kulutus");
     lcd.setCursor(0, 1);
-    lcd.print(aircond_intake);
-    lcd.print(" \xDF""C");
+    lcd.print(waterPulses);
+    lcd.print(" Litraa ");
 
     displayedSensor++;
- } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 13)) {
-   int outdoor = owbuses[14].temperature;
-
-    // Outdoor
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 13)) {
     lcd.clear();
-    lcd.print("outdoor");
+    lcd.print("waterPulsesHistory");
     lcd.setCursor(0, 1);
-    lcd.print(outdoor);
-    lcd.print(" \xDF""C");
+    lcd.print("Litraa/min ");
 
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 14)) {
-    int fireplace = owbuses[0].temperature;
 
-    // Fireplace
     lcd.clear();
-    lcd.print("fireplace");
+    lcd.setCursor(0, 0);
+
+    // Log the waterPulsesHistory[0-6] readings
+    for (int i=0; i < sizeof(waterPulsesHistory) / sizeof(int)-7; i++) {
+
+    lcd.print(waterPulsesHistory[i]);
+    //if(waterPulsesHistory[i] < 6)
+    lcd.print(",");
+    }
     lcd.setCursor(0, 1);
-    lcd.print(fireplace);
-    lcd.print(" \xDF""C");
 
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 15)) {
-    int utility = owbuses[2].temperature;
+    // Log the waterPulsesHistory[6-12] readings
+    for (int i=6; i < sizeof(waterPulsesHistory) / sizeof(int)-1; i++) {
 
-    // Utility
-    lcd.clear();
-    lcd.print("utility");
-    lcd.setCursor(0, 1);
-    lcd.print(utility);
-    lcd.print(" \xDF""C");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 16)) {
-    int kitchen = owbuses[1].temperature;
-
-    // Kitchen
-    lcd.clear();
-    lcd.print("kitchen");
-    lcd.setCursor(0, 1);
-    lcd.print(kitchen);
-    lcd.print(" \xDF""C");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 17)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 1");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[1]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 18)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 2");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[2]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 19)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 3");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[3]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 20)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 4");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[4]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 21)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 5");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[5]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 22)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 6");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[6]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 23)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 7");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[7]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 24)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 8");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[8]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 25)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 9");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[9]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 26)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 10");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[10]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 27)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 11");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[11]);
-    lcd.print(" Litraa");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 28)) {
-
-    // waterPulsesHistory
-    lcd.clear();
-    lcd.print("waterPulsesHistory 12");
-    lcd.setCursor(0, 1);
-    lcd.print(waterPulsesHistory[12]);
-    lcd.print(" Litraa");
-
+    lcd.print(waterPulsesHistory[i]);
+    //if(waterPulsesHistory[i] < 12)
+    lcd.print(",");
+    }
     displayedSensor = 0;
   }
 }
-
 // Decide what to do with the Carrier heatpump
 
 void controlCarrier()
@@ -826,8 +683,8 @@ void updateEmoncms() {
   interrupts();
 
   // Update the water use history
-  for (byte i=0; i++; i<sizeof(waterPulsesHistory) / sizeof(int) - 2) {
-    waterPulsesHistory[i+1] = waterPulsesHistory[i];
+  for (byte i=((sizeof(waterPulsesHistory) / sizeof(int)) - 1); i > 0; i--) {
+    waterPulsesHistory[i] = waterPulsesHistory[i-1];
   }
   waterPulsesHistory[0] = emonWaterPulses;
 
@@ -881,42 +738,15 @@ void updateEmoncms() {
     // Log the MG811 readings
     client.print(",mg811_co2level:");
     client.print(MG811CO2Level);
-    client.print(waterPulsesHistory[1]);
-    // Log the waterPulsesHistory[1] readings
-    client.print(",waterPulsesHistory[1]:");
-    client.print(waterPulsesHistory[2]);
-    // Log the waterPulsesHistory[2] readings
-    client.print(",waterPulsesHistory[2]:");
-    client.print(waterPulsesHistory[3]);
-    // Log the waterPulsesHistory[3] readings
-    client.print(",waterPulsesHistory[3]:");
-    client.print(waterPulsesHistory[4]);
-    // Log the waterPulsesHistory[4] readings
-    client.print(",waterPulsesHistory[4]:");
-    client.print(waterPulsesHistory[5]);
-    // Log the waterPulsesHistory[5] readings
-    client.print(",waterPulsesHistory[5]:");
-    client.print(waterPulsesHistory[6]);
-    // Log the waterPulsesHistory[6] readings
-    client.print(",waterPulsesHistory[6]:");
-    client.print(waterPulsesHistory[7]);
-    // Log the waterPulsesHistory[7] readings
-    client.print(",waterPulsesHistory[7]:");
-    client.print(waterPulsesHistory[8]);
-    // Log the waterPulsesHistory[8] readings
-    client.print(",waterPulsesHistory[8]:");
-    client.print(waterPulsesHistory[9]);
-    // Log the waterPulsesHistory[9] readings
-    client.print(",waterPulsesHistory[9]:");
-    client.print(waterPulsesHistory[10]);
-    // Log the waterPulsesHistory[10] readings
-    client.print(",waterPulsesHistory[10]:");
-    client.print(waterPulsesHistory[11]);
-    // Log the waterPulsesHistory[11] readings
-    client.print(",waterPulsesHistory[11]:");
-    client.print(waterPulsesHistory[12]);
-    // Log the waterPulsesHistory[12] readings
-    client.print(",waterPulsesHistory[12]:");
+
+    // Log the waterPulsesHistory
+    for (byte i=((sizeof(waterPulsesHistory) / sizeof(int)) - 1); i > 0; i--) {
+      client.print(",waterPulsesHistory[");
+      client.print(i);
+      client.print("]:");
+      client.print(waterPulsesHistory[i]);
+    }
+
     // Log the alarm state
     client.print(",alarm_state:");
     if ( alarmState == LOW ) {
@@ -990,8 +820,8 @@ void readMQ7() {
 //
 void readMG811() {
   // Sensor Calibration Constants
-  const float v400ppm = 2.60;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84 2.60 26.05.2014
-  const float v40000ppm = 1.00; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87 1.00 25.05.2014
+  const float v400ppm = 2.49;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84 2.49 30.05.2014
+  const float v40000ppm = 0.80; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87 0.80 30.05.2014
   const float deltavs = v400ppm - v40000ppm;
   const float A = deltavs/(log10(400) - log10(40000));
   const float B = log10(400);
@@ -1020,9 +850,9 @@ void checkForWaterShutoff() {
 //
 void checkForWaterUse() {
 
-  if ( waterPulsesHistory[0] > 14 &&
-       waterPulsesHistory[1] > 15 &&
-       waterPulsesHistory[2] > 14 ) {
+  if ( waterPulsesHistory[0] >= 13 &&  //13
+       waterPulsesHistory[1] >= 14 &&  //14
+       waterPulsesHistory[2] >= 13 ) { //13
     // Water leak - shut off water
     digitalWrite(WATER_STOP_VALVE_PIN, LOW);
     waterState = LOW;
@@ -1043,17 +873,18 @@ void checkForwaterLeak() {
 
   int firstWaterPulse = waterPulsesHistory[0];
 
-  for (byte i=1; i++; i < ((sizeof(waterPulsesHistory) / sizeof(int)) - 1) {
+  for (byte i=0; i < (sizeof(waterPulsesHistory) / sizeof(int)); i++) {
     // It's not a leak if water isn't flowing
     if ( waterPulsesHistory[i] == 0 ) {
       return;
     }
     // If all samples are within +-3 of the first sample, shut off water
     else if ( waterPulsesHistory[i] >= firstWaterPulse-3 && waterPulsesHistory[i] <= firstWaterPulse+3 ) {
+      continue;
+    } else {
       return;
     }
   }
-
   // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
   waterState = LOW;
@@ -1069,12 +900,14 @@ void alarmWaterShutoff() {
   if ( alarmState != alarmStateHistory ) {
     digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
     waterState = alarmState;
+    waterLeakState == false;
   } else if (waterLeakState == true ) {
     digitalWrite(WATER_STOP_VALVE_PIN, LOW);
     waterState = LOW;
-  } else if (waterLeakState == false )  {
+  } else {
     digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
     waterState = alarmState;
+    waterLeakState == false;
   }
 
   alarmStateHistory = alarmState;
