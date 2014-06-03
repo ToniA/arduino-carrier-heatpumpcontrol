@@ -481,20 +481,20 @@ void updateDisplay()
     lcd.setCursor(0, 0);
 
     // Log the waterPulsesHistory[0-6] readings
-    for (int i=0; i < sizeof(waterPulsesHistory) / sizeof(int)-7; i++) {
-
-    lcd.print(waterPulsesHistory[i]);
-    //if(waterPulsesHistory[i] < 6)
-    lcd.print(",");
+    for (int i=0; i < sizeof(waterPulsesHistory) / sizeof(int)-6; i++) {
+      lcd.print(waterPulsesHistory[i]);
+      if (i < 5) {
+        lcd.print(",");
+      }
     }
     lcd.setCursor(0, 1);
 
     // Log the waterPulsesHistory[6-12] readings
-    for (int i=6; i < sizeof(waterPulsesHistory) / sizeof(int)-1; i++) {
-
-    lcd.print(waterPulsesHistory[i]);
-    //if(waterPulsesHistory[i] < 12)
-    lcd.print(",");
+    for (int i=6; i < sizeof(waterPulsesHistory) / sizeof(int); i++) {
+      lcd.print(waterPulsesHistory[i]);
+      if (i < 11) {
+        lcd.print(",");
+      }
     }
     displayedSensor = 0;
   }
