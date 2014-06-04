@@ -893,21 +893,22 @@ void checkForwaterLeak() {
 
 //
 // Check if the water valve needs to be open or shut, based on the alarm state
-// TODO: This should also consider the water leaks
+// When the alarm turns off, water will always turn on, and all leak history info
+// is cleared
 //
 void alarmWaterShutoff() {
 
   if ( alarmState != alarmStateHistory ) {
+    // Alarm goes to a different state - clear all leak information so that alarm OFF will
+    // always turn water on
     digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
+
     waterState = alarmState;
-    waterLeakState == false;
-  } else if (waterLeakState == true ) {
-    digitalWrite(WATER_STOP_VALVE_PIN, LOW);
-    waterState = LOW;
-  } else {
-    digitalWrite(WATER_STOP_VALVE_PIN, alarmState);
-    waterState = alarmState;
-    waterLeakState == false;
+    waterLeakState = false;
+
+    for (byte i=0; i < (sizeof(waterPulsesHistory) / sizeof(int)); i++) {
+      waterPulsesHistory[i] = 0 );
+    }
   }
 
   alarmStateHistory = alarmState;
