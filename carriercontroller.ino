@@ -907,7 +907,7 @@ void alarmWaterShutoff() {
     waterLeakState = false;
 
     for (byte i=0; i < (sizeof(waterPulsesHistory) / sizeof(int)); i++) {
-      waterPulsesHistory[i] = 0 );
+      waterPulsesHistory[i] = 0;
     }
   }
 
