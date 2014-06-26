@@ -81,24 +81,24 @@ struct owbus
 
 // and the array
 owbus owbuses[] = {
-  {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takka"},                // Fireplace
-  {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},             // Kitchen
-  {owsensors2, DEVICE_DISCONNECTED, "utl_room", "KHH"},                   // Utility room
-  {owsensors3, DEVICE_DISCONNECTED, "bedroom", "Julian huone"},           // Bedroom
-  {owsensors4, DEVICE_DISCONNECTED, "master_bedroom", "Makuuhuone"},      // Master bedroom
-  {owsensors5, DEVICE_DISCONNECTED, "warehouse", "Varasto"},              // Warehouse
-  {owsensors6, DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},               // Outdoor air
-  {owsensors7, DEVICE_DISCONNECTED, "aircond_intake", "ILP imuilma"},     // Carrier intake air
-  {owsensors8, DEVICE_DISCONNECTED, "aircond_out", "ILP puhallusilma"},   // Carrier outlet air
-  {owsensors9, DEVICE_DISCONNECTED, "aircond_hotpipe", "ILP kuumakaasu"}, // Carrier hot gas pipe
-  {owsensors10,DEVICE_DISCONNECTED, "boiler_mid", "Kuumavesivar.keski"},  // Hot water boiler middle
-  {owsensors11,DEVICE_DISCONNECTED, "boiler_top", "Kuumavesivar.yl\xE1"}, // Hot water boiler up
-  {owsensors12,DEVICE_DISCONNECTED, "hot_water", "Kuumavesi"},            // Hot water
-  {owsensors13,DEVICE_DISCONNECTED, "water", "Vesi"},                     // Cold Water
-  {owsensors14,DEVICE_DISCONNECTED, "vent_outdoor", "LTO ulkoilma"},      // Ventilation machine fresh air in
-  {owsensors15,DEVICE_DISCONNECTED, "vent_fresh", "LTO tulokenno"},       // Ventilation machine fresh air out
-  {owsensors16,DEVICE_DISCONNECTED, "vent_dirty", "LTO sis\xE1ilma"},     // Ventilation machine waste air in
-  {owsensors17,DEVICE_DISCONNECTED, "vent_waste", "LTO poistoilma"}       // Ventilation machine waste air out
+  {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takka huone"},             // Fireplace
+  {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},                // Kitchen
+  {owsensors2, DEVICE_DISCONNECTED, "utl_room", "Kodinhoitohuone"},          // Utility room
+  {owsensors3, DEVICE_DISCONNECTED, "bedroom", "Julian huone"},              // Bedroom
+  {owsensors4, DEVICE_DISCONNECTED, "master_bedroom", "Makuuhuone"},         // Master bedroom
+  {owsensors5, DEVICE_DISCONNECTED, "warehouse", "Varasto"},                 // Warehouse
+  {owsensors6, DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},                  // Outdoor air
+  {owsensors7, DEVICE_DISCONNECTED, "aircond_intake", "Imuilma \x7E ILP "},  // Carrier intake air
+  {owsensors8, DEVICE_DISCONNECTED, "aircond_out", "ILP \x7E puhallus"},     // Carrier outlet air
+  {owsensors9, DEVICE_DISCONNECTED, "aircond_hotpipe", "ILP kuumakaasu"},    // Carrier hot gas pipe
+  {owsensors10,DEVICE_DISCONNECTED, "boiler_mid", "Kuumavesivar.keski"},     // Hot water boiler middle
+  {owsensors11,DEVICE_DISCONNECTED, "boiler_top", "Kuumavesivar.yl\xE1"},    // Hot water boiler up
+  {owsensors12,DEVICE_DISCONNECTED, "hot_water", "Kuumavesi"},               // Hot water
+  {owsensors13,DEVICE_DISCONNECTED, "water", "Tuleva vesi"},                 // Cold Water
+  {owsensors14,DEVICE_DISCONNECTED, "vent_outdoor", "Ulkoilma \x7E LTO"},    // Ventilation machine fresh air in
+  {owsensors15,DEVICE_DISCONNECTED, "vent_fresh", "LTO l\xE1mmitt\xE1\xE1"}, // Ventilation machine fresh air out
+  {owsensors16,DEVICE_DISCONNECTED, "vent_dirty", "LTO \x7E sis\xE1ilma"},   // Ventilation machine waste air in
+  {owsensors17,DEVICE_DISCONNECTED, "vent_waste", "LTO \x7E poistoilma"}     // Ventilation machine waste air out
 };
 
 
@@ -154,6 +154,9 @@ int test;
 // Water state
 bool waterState;
 bool waterLeakState;
+bool ShowerWaterUse;
+unsigned long lastWaterPulse = 0;
+
 
 void setup()
 {
@@ -191,6 +194,7 @@ void setup()
 
   // waterLeak state is false
   waterLeakState == false;
+  ShowerWaterUse == false;
 
   // List OneWire devices
   for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++)
@@ -297,7 +301,7 @@ void updateDisplay()
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 1)) {
     // Ventilation machine waste air in sensor level
     lcd.clear();
-    lcd.print("Sis\xE1ilma LTO");
+    lcd.print("Sis\xE1ilma \x7E LTO");
 
     lcd.setCursor(0, 1);
     lcd.print(DHT11Temperature);
@@ -311,7 +315,7 @@ void updateDisplay()
 
     lcd.setCursor(0, 1);
     lcd.print(DHT11Humidity);
-    lcd.print(" %");
+    lcd.print(" %  Sis\xE1ll\xE1");
 
 
     // And the same on debug display
@@ -400,10 +404,22 @@ void updateDisplay()
 
     lcd.setCursor(0, 1);
     lcd.print(MQ7COLevel);
+
     // lcd.print(" ppm"); // This is certainly not ppm's. I don't know what unit this number stands for
 
-    displayedSensor++;
+   displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 7)) {
+    // CO2 level
+    lcd.clear();
+    lcd.print("CO2-taso ");
+    lcd.print(MG811Voltage);
+    lcd.print(" V");
+    lcd.setCursor(0, 1);
+    lcd.print(MG811CO2Level);
+    lcd.print(" ppm");
+
+    displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
     // water state mode display
     lcd.clear();
     lcd.print("Vedensulku");
@@ -415,7 +431,7 @@ void updateDisplay()
     }
 
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 9)) {
     // water Leak State mode display
     lcd.clear();
     lcd.print("Vuototesti");
@@ -426,8 +442,20 @@ void updateDisplay()
       lcd.print("OK");
     }
 
+     displayedSensor++;
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 10)) {
+    // water Leak State mode display
+    lcd.clear();
+    lcd.print("Suikunk\xE1ytt\xEF");
+    lcd.setCursor(0, 1);
+    if (ShowerWaterUse == true) {
+      lcd.print("yli 12 min");
+    } else {
+      lcd.print("OK");
+    }
+
     displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 9)) {
+  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 11)) {
     // alarm State mode display
     lcd.clear();
     lcd.print("h\xE1lytin");
@@ -437,25 +465,6 @@ void updateDisplay()
     } else {
       lcd.print("OFF");
     }
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 10)) {
-    // CO2 level
-    lcd.clear();
-    lcd.print("CO2-taso");
-
-    lcd.setCursor(0, 1);
-    lcd.print(MG811CO2Level);
-    lcd.print(" ppm");
-
-    displayedSensor++;
-  } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 11)) {
-    // CO2 sensor voltage
-    lcd.clear();
-    lcd.print("CO2 j\xE1nnite");
-    lcd.setCursor(0, 1);
-    lcd.print(MG811Voltage);
-    lcd.print(" V");
 
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 12)) {
@@ -470,9 +479,9 @@ void updateDisplay()
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 13)) {
     lcd.clear();
-    lcd.print("waterPulsesHistory");
+    lcd.print("Vedenk\xE1ytt\xEF");
     lcd.setCursor(0, 1);
-    lcd.print("Litraa/min ");
+    lcd.print("historia 12 min");
 
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 14)) {
@@ -483,8 +492,10 @@ void updateDisplay()
     // Log the waterPulsesHistory[0-6] readings
     for (int i=0; i < sizeof(waterPulsesHistory) / sizeof(int)-6; i++) {
       lcd.print(waterPulsesHistory[i]);
-      if (i < 5) {
+      if (i < 5)
         lcd.print(",");
+      else {
+      lcd.print(" Lit");
       }
     }
     lcd.setCursor(0, 1);
@@ -492,8 +503,10 @@ void updateDisplay()
     // Log the waterPulsesHistory[6-12] readings
     for (int i=6; i < sizeof(waterPulsesHistory) / sizeof(int); i++) {
       lcd.print(waterPulsesHistory[i]);
-      if (i < 11) {
+      if (i < 11)
         lcd.print(",");
+      else {
+      lcd.print(" raa");
       }
     }
     displayedSensor = 0;
@@ -529,7 +542,7 @@ void controlCarrier()
 
   // Heatpump control
   // Set the mode based on the outdoor temperature (summer cooling)
-  if (outdoor >= 20 && aircond_intake >= 24) {
+  if (outdoor >= 21 && aircond_intake >= 24) {
     operatingMode = MODE_COOL;
     temperature = 24;
     fanSpeed = FAN_AUTO;
@@ -738,6 +751,9 @@ void updateEmoncms() {
     // Log the MG811 readings
     client.print(",mg811_co2level:");
     client.print(MG811CO2Level);
+    // Log the MG811 readings
+    client.print(",mg811_Voltage:");
+    client.print(MG811Voltage);
 
     // Log the waterPulsesHistory
     for (byte i=((sizeof(waterPulsesHistory) / sizeof(int)) - 1); i > 0; i--) {
@@ -764,6 +780,13 @@ void updateEmoncms() {
     // Log the leak state
     client.print(",waterLeak_state:");
     if ( waterLeakState == true ) {
+      client.print("0");
+    } else {
+      client.print("1");
+    }
+    // Log the leak state
+    client.print(",showerWaterUse_state:");
+    if ( ShowerWaterUse == true ) {
       client.print("0");
     } else {
       client.print("1");
@@ -820,8 +843,8 @@ void readMQ7() {
 //
 void readMG811() {
   // Sensor Calibration Constants
-  const float v400ppm = 2.49;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84 2.49 30.05.2014
-  const float v40000ppm = 0.80; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87 0.80 30.05.2014
+  const float v400ppm = 2.21;   //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 2.84  USE 2.21 24.06.2014
+  const float v40000ppm = 0.80; //MUST BE SET ACCORDING TO CALIBRATION -> FREE AIR 1.87  USE 0.80 24.06.2014
   const float deltavs = v400ppm - v40000ppm;
   const float A = deltavs/(log10(400) - log10(40000));
   const float B = log10(400);
@@ -850,14 +873,24 @@ void checkForWaterShutoff() {
 //
 void checkForWaterUse() {
 
-  if ( waterPulsesHistory[0] >= 13 &&  //13
-       waterPulsesHistory[1] >= 14 &&  //14
-       waterPulsesHistory[2] >= 13 ) { //13
-    // Water leak - shut off water
-    digitalWrite(WATER_STOP_VALVE_PIN, LOW);
-    waterState = LOW;
-    waterLeakState = true;
+  for (byte i=0; i < (sizeof(waterPulsesHistory) / sizeof(int))-7; i++) {
+    // If all samples are 1, shut off water
+    if ( waterPulsesHistory[i] == 1 ) { // 1
+      continue;
+    }
+    // If recent samples are 13-14 or over, shut off water
+    else if (waterPulsesHistory[0] >= 13 && // 13
+             waterPulsesHistory[1] >= 14 && // 14
+             waterPulsesHistory[2] >= 13) { // 13
+      continue;
+    } else {
+      return;
+    }
   }
+ // Water leak - shut off water
+  digitalWrite(WATER_STOP_VALVE_PIN, LOW);
+  waterState = LOW;
+  waterLeakState = true;
 }
 
 //
@@ -888,7 +921,7 @@ void checkForwaterLeak() {
   // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
   waterState = LOW;
-  waterLeakState = true;
+  ShowerWaterUse = true;
 }
 
 //
@@ -905,6 +938,7 @@ void alarmWaterShutoff() {
 
     waterState = alarmState;
     waterLeakState = false;
+    ShowerWaterUse = false;
 
     for (byte i=0; i < (sizeof(waterPulsesHistory) / sizeof(int)); i++) {
       waterPulsesHistory[i] = 0;
