@@ -950,10 +950,15 @@ void alarmWaterShutoff() {
 
 //
 // Increment the number of water meter pulses
+// * Do not count more than one pulse per second, for example thunder will cause false pulses
 //
 void incrementWaterPulses()
 {
-  waterPulses++;
+  if ( (millis() - lastWaterPulse) > 1000 ) {
+    waterPulses++;
+  }
+
+  lastWaterPulse = millis();
 }
 
 
