@@ -84,7 +84,7 @@ struct owbus
 
 // and the array
 owbus owbuses[] = {
-  {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takka huone"},             // Fireplace
+  {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takkahuone"},              // Fireplace
   {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},                // Kitchen
   {owsensors2, DEVICE_DISCONNECTED, "utl_room", "Kodinhoitohuone"},          // Utility room
   {owsensors3, DEVICE_DISCONNECTED, "bedroom", "Julian huone"},              // Bedroom
@@ -112,13 +112,13 @@ struct CarrierHeatpump
   int operatingMode;
   int fanSpeed;
   int temperature;
-  int HumidityILPNotHeat;  // huminity ilp not heat > 50%;  
+  int humidityILPNotHeating;  // humidity when not heating > 50%;
   bool fireplaceFan;
 };
 
 // Default mode for the heatpump is HEAT, AUTO FAN and 19 degrees.
 // 19 degrees also means that 7.5 minutes after startup the command will be
-// sent if huminity < 50%  
+// sent if huminity < 50%
 CarrierHeatpump carrierHeatpump = { 2, 0, 19, false };
 
 // The Carrier heatpump instance, and the IRSender instance
@@ -135,12 +135,11 @@ IPAddress ip(192, 168, 100, 9); // ip(192, 168, 1, 9);
 // The timers
 Timer timer;
 
-
 // The amount of Heatpump power pulses since the last update to emoncms
-volatile int HeatpumpPowerPulses = 0;
+volatile int heatpumpPowerPulses = 0;
 
 // The amount of Heatpump in fan RPM pulses since the last update to emoncms
-volatile int HeatpumpRpmPulses = 0;
+volatile int heatpumpRpmPulses = 0;
 
 // The amount of water meter pulses since the last update to emoncms
 volatile int waterPulses = 0;
@@ -161,27 +160,22 @@ int alarmState;
 int alarmStateHistory;
 
 // ILP
-float HeatpumpCOP_EER;
-int HeatpumpPower;
-int HeatpumpAirFlowRate;
-int HeatCopEerOff = 0;
-
-// test
-int test;
+float heatpumpCOP_EER;
+int heatpumpPower;
+int heatpumpAirFlowRate;
+int heatCOPEEROff = 0;
 
 // Water state
 bool waterState;
 bool waterLeakState;
-bool ShowerWaterUse;
+bool showerWaterUse;
 unsigned long lastWaterPulse = 0;
 
-// HeatpumpPowerPulses
-unsigned long lastHeatpumpPowerPulses = 0;
+// heatpumpPowerPulses
+unsigned long lastheatpumpPowerPulses = 0;
 
-// HeatpumpRpmPulses
-unsigned long lastHeatpumpRpmPulses = 0;
-
-
+// heatpumpRpmPulses
+unsigned long lastheatpumpRpmPulses = 0;
 
 
 void setup()
@@ -226,7 +220,7 @@ void setup()
 
   // waterLeak state is false
   waterLeakState == false;
-  ShowerWaterUse == false;
+  showerWaterUse == false;
 
   // List OneWire devices
   for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++)
@@ -274,27 +268,26 @@ void setup()
   timer.every(2000, alarmWaterShutoff);            // every 1 seconds
   timer.every(60000, readSensors);                 // every minute
   timer.every(60000, updateEmoncms);               // every minute
-//timer.every(60000, incrementHeatpumpCOP_EER);    // every minute
+//timer.every(60000, incrementheatpumpCOP_EER);    // every minute
   timer.every(60000, checkForWaterShutoff);        // every minute
   timer.every(15000, requestTemperatures);         // every 15 seconds
-  timer.every(450017, controlCarrier);             // every ~ 7.50028 minute  oli 5.50028 minute = 330017 ms
+  timer.every(450017, controlCarrier);             // every ~ 7.50028 minutes
 
   // Water meter pulse counter interrupt
   // interrupt 3 uses pin 20
   attachInterrupt(3, incrementWaterPulses, FALLING);
-  
+
   // Heatpump power pulse counter interrupt
   // interrupt 2 uses pin 21
-  attachInterrupt(2, incrementHeatpumpPowerPulses, FALLING);
-  
+  attachInterrupt(2, incrementheatpumpPowerPulses, FALLING);
+
   // Heatpump rpm pulse counter interrupt
   // interrupt 4 uses pin 19
-  attachInterrupt(4, incrementHeatpumpRpmPulses, FALLING);
-  
+  attachInterrupt(4, incrementheatpumpRpmPulses, FALLING);
+
   // pulse counter interrupt
   // interrupt 5 uses pin 18
   //attachInterrupt(5, incrementPulses, FALLING);
-
 
   // Initialize the DHT library
   dht.begin();
@@ -355,7 +348,7 @@ void updateDisplay()
 
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 2)) {
-    // Humidity sensor level
+    // humidity sensor level
     lcd.clear();
     lcd.print("Ilmankosteus");
 
@@ -426,9 +419,9 @@ void updateDisplay()
       lcd.print("A");
     } else {
       lcd.print(carrierHeatpump.fanSpeed);
-      
-       }
-       
+
+    }
+
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 5)) {
 
@@ -436,28 +429,28 @@ void updateDisplay()
     lcd.clear();
     lcd.print("ILP COP-EER ");
     lcd.setCursor(0, 1);
-    lcd.print(HeatpumpCOP_EER);
+    lcd.print(heatpumpCOP_EER);
     //lcd.print("  ");
-    
+
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 6)) {
     // Heatpump Power level
     lcd.clear();
-    lcd.print("ILP Ottovirta ");
+    lcd.print("ILP ottoteho ");
     lcd.setCursor(0, 1);
-    lcd.print(HeatpumpPower);
-    lcd.print(" w");
-    
+    lcd.print(heatpumpPower);
+    lcd.print(" W");
+
        displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 7)) {
     // Heatpump Air Flow  level
     lcd.clear();
-    lcd.print("ILP ilmanvirtaus ");
+    lcd.print("ILP ilmavirta ");
     lcd.setCursor(0, 1);
-    lcd.print(HeatpumpAirFlowRate);
+    lcd.print(heatpumpAirFlowRate);
     lcd.print(" m3/h");
-    
-      
+
+
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 8)) {
     // Fireplace mode display
@@ -481,10 +474,10 @@ void updateDisplay()
     lcd.setCursor(0, 1);
     lcd.print(MQ7COLevel);
     lcd.print(" ppm");
-    
+
     // lcd.print(" ppm"); // This is certainly not ppm's. I don't know what unit this number stands for
 
-   displayedSensor++;
+    displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 10)) {
     // CO2 level
     lcd.clear();
@@ -525,7 +518,7 @@ void updateDisplay()
     lcd.clear();
     lcd.print("Suikunk\xE1ytt\xEF");
     lcd.setCursor(0, 1);
-    if (ShowerWaterUse == true) {
+    if (showerWaterUse == true) {
       lcd.print("yli 12 min");
     } else {
       lcd.print("OK");
@@ -548,10 +541,10 @@ void updateDisplay()
 
     // waterPulsesHistory
     lcd.clear();
-    lcd.print("Veden kulutus");
+    lcd.print("Vedenkulutus");
     lcd.setCursor(0, 1);
     lcd.print(waterPulses);
-    lcd.print(" Litraa ");
+    lcd.print(" L");
 
     displayedSensor++;
   } else if (displayedSensor < (sizeof(owbuses) / sizeof(struct owbus) + 16)) {
@@ -604,12 +597,11 @@ void controlCarrier()
   int fireplace = owbuses[0].temperature;
   int utility = owbuses[2].temperature;
   int kitchen = owbuses[1].temperature;
-  int Humidity = DHT11Humidity;
-  int HumidityILPNotHeat = 50;  // huminity ilp not heat > 50%
-  
-  HeatCopEerOff = 0;
-  
-   
+  int humidity = DHT11Humidity;
+  int humidityILPNotHeating = 50;  // huminity ilp not heat > 50%
+
+  heatCOPEEROff = 0;
+
   // Fireplace fan control
 
   if (fireplace <= 24) {
@@ -623,40 +615,40 @@ void controlCarrier()
   }
 
   // Heatpump control
-  
+
   // Set the mode based on the outdoor temperature and COP-EER
   //operatingMode = MODE_HEAT;
   //fanSpeed = FAN_AUTO;
-  
-    if (HeatpumpCOP_EER >= 5.0 && outdoor >= 15 && outdoor < 20) { 
-    HeatCopEerOff = 1;  
-  } else if (HeatpumpCOP_EER >= 4.5 && outdoor >= 10   && outdoor < 15) { 
-    HeatCopEerOff = 2;  
-  } else if (HeatpumpCOP_EER >= 4.0 && outdoor >= 5   && outdoor < 10)  {  
-    HeatCopEerOff = 3;
-  } else if (HeatpumpCOP_EER >= 3.5 && outdoor >= 0   && outdoor < 5)   { 
-    HeatCopEerOff = 4;  
-  } else if (HeatpumpCOP_EER >= 3.0 && outdoor >= -4  && outdoor < 0)   { 
-    HeatCopEerOff = 5; 
-  } else if (HeatpumpCOP_EER >= 2.5 && outdoor >= -9  && outdoor < -4)  { 
-    HeatCopEerOff = 6;
-  } else if (HeatpumpCOP_EER >= 2.3 && outdoor >= -14 && outdoor < -9)  { 
-    HeatCopEerOff = 7;
-  } else if (HeatpumpCOP_EER >= 2.1 && outdoor >= -19 && outdoor < -14) { 
-    HeatCopEerOff = 8;
-  } else if (HeatpumpCOP_EER >= 1.8 && outdoor >= -24 && outdoor < -19) {
-    HeatCopEerOff = 9;
-  } else if (HeatpumpCOP_EER >= 1.6 && outdoor >= -29 && outdoor < -24) {
-    HeatCopEerOff = 10;
-  } else if (HeatpumpCOP_EER >= 1.5 && outdoor >= -35 && outdoor < -29) { 
-    HeatCopEerOff = 11;  
-  } else if (HeatpumpCOP_EER >= 1.2 && outdoor >= -45 && outdoor < -35) {
-    HeatCopEerOff = 12;  
-  }  
-    
-     // Heatpump control
+
+  if (heatpumpCOP_EER >=  5.0 && outdoor >= 15 && outdoor < 20) {
+    heatCOPEEROff = 1;
+  } else if (heatpumpCOP_EER >= 4.5 && outdoor >= 10   && outdoor < 15) {
+    heatCOPEEROff = 2;
+  } else if (heatpumpCOP_EER >= 4.0 && outdoor >= 5   && outdoor < 10)  {
+    heatCOPEEROff = 3;
+  } else if (heatpumpCOP_EER >= 3.5 && outdoor >= 0   && outdoor < 5)   {
+    heatCOPEEROff = 4;
+  } else if (heatpumpCOP_EER >= 3.0 && outdoor >= -4  && outdoor < 0)   {
+    heatCOPEEROff = 5;
+  } else if (heatpumpCOP_EER >= 2.5 && outdoor >= -9  && outdoor < -4)  {
+    heatCOPEEROff = 6;
+  } else if (heatpumpCOP_EER >= 2.3 && outdoor >= -14 && outdoor < -9)  {
+    heatCOPEEROff = 7;
+  } else if (heatpumpCOP_EER >= 2.1 && outdoor >= -19 && outdoor < -14) {
+    heatCOPEEROff = 8;
+  } else if (heatpumpCOP_EER >= 1.8 && outdoor >= -24 && outdoor < -19) {
+    heatCOPEEROff = 9;
+  } else if (heatpumpCOP_EER >= 1.6 && outdoor >= -29 && outdoor < -24) {
+    heatCOPEEROff = 10;
+  } else if (heatpumpCOP_EER >= 1.5 && outdoor >= -35 && outdoor < -29) {
+    heatCOPEEROff = 11;
+  } else if (heatpumpCOP_EER >= 1.2 && outdoor >= -45 && outdoor < -35) {
+    heatCOPEEROff = 12;
+  }
+
+  // Heatpump control
   // Set the mode based on the outdoor temperature (summer cooling)
-   if (outdoor >= 20 &&  aircond_intake >= 23) {
+  if (outdoor >= 20 &&  aircond_intake >= 23) {
     operatingMode = MODE_COOL;
     temperature = 25;
     fanSpeed = FAN_AUTO;
@@ -664,7 +656,7 @@ void controlCarrier()
     if (outdoor >= 24 && outdoor <= 27 && aircond_intake >= 23) {
       temperature = 24;
     } else if (outdoor >= 28 && aircond_intake >= 23) {
-      temperature = 23;    
+      temperature = 23;
     }
   // Fireplace is hot, use the FAN mode
   } else if (fireplace >= 25) {
@@ -683,13 +675,13 @@ void controlCarrier()
       fanSpeed = FAN_5;
     }
   // Utility room is hot, as the laundry drier has been running
-  } else if ( utility >= 23) { 
+  } else if ( utility >= 23) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
 
-    if (utility >= 24 && utility < 25) { 
+    if (utility >= 24 && utility < 25) {
       fanSpeed = FAN_2;
     } else if ( utility >= 25 && utility < 26) {
       fanSpeed = FAN_3;
@@ -706,13 +698,13 @@ void controlCarrier()
     }
 
   // Kitchen is hot, as the oven has been running
-  } else if ( kitchen >= 23) { 
+  } else if ( kitchen >= 23) {
     // Default to MODE_FAN with FAN 1
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_1;
 
-    if (kitchen >= 24 && kitchen < 25) { 
+    if (kitchen >= 24 && kitchen < 25) {
       fanSpeed = FAN_2;
     } else if ( kitchen >= 25 && kitchen < 26) {
       fanSpeed = FAN_3;
@@ -736,49 +728,49 @@ void controlCarrier()
     fanSpeed = FAN_AUTO;
 
   // Set the mode based on the outdoor temperature (heating)
-  } else if (Humidity < 50 ) {
+  } else if (humidity < 50 ) {
     // FAN with FAN 1 temp+22
     operatingMode = MODE_HEAT;
     temperature = 20;
     fanSpeed = FAN_AUTO;
 
-    if ((outdoor >= 15 && outdoor < 20) && Humidity < HumidityILPNotHeat ) {
+    if ((outdoor >= 15 && outdoor < 20) && humidity < humidityILPNotHeating ) {
       temperature = 21;
-    } else if ((outdoor >= 5 && outdoor < 15) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= 5 && outdoor < 15) && humidity < humidityILPNotHeating ) {
       temperature = 22;
-    } else if ((outdoor >= 0 && outdoor < 5) && Humidity < HumidityILPNotHeat ){ // -1~500w 0~750w 1~1150w  2~1500w
+    } else if ((outdoor >= 0 && outdoor < 5) && humidity < humidityILPNotHeating ){ // -1~500w 0~750w 1~1150w  2~1500w
       temperature = 23;
-    } else if ((outdoor >= -4 && outdoor < 0) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= -4 && outdoor < 0) && humidity < humidityILPNotHeating ) {
       temperature = 24;
-    } else if ((outdoor >= -9 && outdoor < -4) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= -9 && outdoor < -4) && humidity < humidityILPNotHeating ) {
       temperature = 25;
-    } else if ((outdoor >= -14 && outdoor < -9) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= -14 && outdoor < -9) && humidity < humidityILPNotHeating ) {
       temperature = 26;
-    } else if ((outdoor >= -19 && outdoor < -14) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= -19 && outdoor < -14) && humidity < humidityILPNotHeating ) {
       temperature = 27;
-    } else if ((outdoor >= -24 && outdoor < -19) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= -24 && outdoor < -19) && humidity < humidityILPNotHeating ) {
       temperature = 28;
-    } else if ((outdoor >= -29 && outdoor < -24) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= -29 && outdoor < -24) && humidity < humidityILPNotHeating ) {
       temperature = 29;
-    } else if ((outdoor >= -35 && outdoor < -29) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= -35 && outdoor < -29) && humidity < humidityILPNotHeating ) {
       temperature = 30;
-    } else if ((outdoor >= -45 && outdoor < -35) && Humidity < HumidityILPNotHeat ) {
+    } else if ((outdoor >= -45 && outdoor < -35) && humidity < humidityILPNotHeating ) {
       temperature = 30;
     }
-    
+
     } else {
     // MODE_FAN with FAN_AUTO if nothing else match
     operatingMode = MODE_FAN;
     temperature = 22;
     fanSpeed = FAN_AUTO;
-    
- } 
- if (HeatCopEerOff != 0){
+  }
+
+  if (heatCOPEEROff != 0){
     operatingMode = carrierHeatpump.operatingMode;
     fanSpeed = carrierHeatpump.fanSpeed;
     temperature = carrierHeatpump.temperature;
-     
   }
+
   // Did any of the values change? If so, send an IR command
   if (operatingMode != carrierHeatpump.operatingMode ||
       fanSpeed != carrierHeatpump.fanSpeed ||
@@ -810,59 +802,55 @@ void updateEmoncms() {
   EthernetClient client;
   boolean notFirst = false;
   int emonWaterPulses = 0;
-  int emonHeatpumpPowerPulses = 0;
-  int emonHeatpumpRpmPulses = 0;
-  //int HeatCopEerOff;
+  int emonheatpumpPowerPulses = 0;
+  int emonheatpumpRpmPulses = 0;
+  //int heatCOPEEROff;
 
   // Interrupts need to be disabled while the pulse counter is read or modified...
   noInterrupts();
   emonWaterPulses = waterPulses;
   waterPulses = 0;
-  emonHeatpumpPowerPulses = HeatpumpPowerPulses;
-  HeatpumpPowerPulses = 0;
-  emonHeatpumpRpmPulses = HeatpumpRpmPulses;
-  HeatpumpRpmPulses = 0;
+  emonheatpumpPowerPulses = heatpumpPowerPulses;
+  heatpumpPowerPulses = 0;
+  emonheatpumpRpmPulses = heatpumpRpmPulses;
+  heatpumpRpmPulses = 0;
   interrupts();
-  
- 
- //void incrementHeatpumpCOP_EER()
- {
-   
-  HeatpumpAirFlowRate = (emonHeatpumpRpmPulses*0.668-199.5);
-  HeatpumpPower = (emonHeatpumpPowerPulses*60);
-  
-if  (HeatpumpAirFlowRate  < 0 ){
-  HeatpumpAirFlowRate = 0;
+
+
+  heatpumpAirFlowRate = (emonheatpumpRpmPulses*0.668-199.5);
+  heatpumpPower = (emonheatpumpPowerPulses*60);
+
+  if  (heatpumpAirFlowRate  < 0 ){
+    heatpumpAirFlowRate = 0;
   }
-// RAFUn estimaattikaavalla ilmantiheydelle [kg/m3]
+
+  // RAFUn estimaattikaavalla ilmantiheydelle [kg/m3]
 // 1,301-0,00525*T+0,000023*T*T, jossa T = puhallusilman lämpötila
 
 //antotehon kaava [W]:
 // ((Tpuh-Timu)*qv,puh*(1,301-0,00525*Tpuh+0,000023*Tpuh*Tpuh)*1,005/3,6)
-
-  if (owbuses[8].temperature-owbuses[7].temperature >= 0 ) {
-  // Lämmitys COP 
-  HeatpumpCOP_EER = ((owbuses[8].temperature-owbuses[7].temperature)*(emonHeatpumpRpmPulses*0.668-199.5)*(1.301-0.00525*owbuses[8].temperature+0.000023*owbuses[8].temperature*owbuses[8].temperature)*1.005/3.6) / (emonHeatpumpPowerPulses*60);
-    
-} else if (owbuses[8].temperature-owbuses[7].temperature < 0 ) {
-  // Jäähdytys EER
-  HeatpumpCOP_EER = ((owbuses[7].temperature-owbuses[8].temperature)*(emonHeatpumpRpmPulses*0.668-199.5)*(1.301-0.00525*owbuses[8].temperature+0.000023*owbuses[8].temperature*owbuses[8].temperature)*1.005/3.6) / (emonHeatpumpPowerPulses*60);
-}
-  
-  if (HeatpumpPower < 60) {
-  HeatpumpCOP_EER = 0;
-} else if (carrierHeatpump.operatingMode == 4 || carrierHeatpump.operatingMode == 5 || carrierHeatpump.operatingMode == 6) {
-  HeatpumpCOP_EER = 0;
-} else if (HeatpumpCOP_EER < -1 ) {
-  HeatpumpCOP_EER = -1;
-} else if (HeatpumpCOP_EER > 10) {
-  HeatpumpCOP_EER = 10;
-}
- 
 // Tpuh = puhallusilman lämpötila [C]
 // Timu = imuilman lämpötila [C]
 // qv,puh = puhallusilman määrä [m3/h]
-}
+
+  if (owbuses[8].temperature-owbuses[7].temperature >= 0 ) {
+    // Lämmitys COP
+    heatpumpCOP_EER = ((owbuses[8].temperature-owbuses[7].temperature)*(emonheatpumpRpmPulses*0.668-199.5)*(1.301-0.00525*owbuses[8].temperature+0.000023*owbuses[8].temperature*owbuses[8].temperature)*1.005/3.6) / (emonheatpumpPowerPulses*60);
+
+  } else if (owbuses[8].temperature-owbuses[7].temperature < 0 ) {
+    // Jäähdytys EER
+    heatpumpCOP_EER = ((owbuses[7].temperature-owbuses[8].temperature)*(emonheatpumpRpmPulses*0.668-199.5)*(1.301-0.00525*owbuses[8].temperature+0.000023*owbuses[8].temperature*owbuses[8].temperature)*1.005/3.6) / (emonheatpumpPowerPulses*60);
+  }
+
+  if (heatpumpPower < 60) {
+    heatpumpCOP_EER = 0;
+  } else if (carrierHeatpump.operatingMode == 4 || carrierHeatpump.operatingMode == 5 || carrierHeatpump.operatingMode == 6) {
+    heatpumpCOP_EER = 0;
+  } else if (heatpumpCOP_EER < -1 ) {
+    heatpumpCOP_EER = -1;
+  } else if (heatpumpCOP_EER > 10) {
+    heatpumpCOP_EER = 10;
+  }
 
   // Update the water use history
   for (byte i=((sizeof(waterPulsesHistory) / sizeof(int)) - 1); i > 0; i--) {
@@ -917,19 +905,19 @@ if  (HeatpumpAirFlowRate  < 0 ){
     client.print(emonWaterPulses);
       // Log the Heatpump COP / EER
     client.print(",Heatpump_COP_EER:");
-    client.print(HeatpumpCOP_EER);
+    client.print(heatpumpCOP_EER);
     // Log the Heatpump Power W
     client.print(",Heatpump_Power:");
-    client.print(HeatpumpPower);
+    client.print(heatpumpPower);
     // Log the Heatpump Air Flow Rate
     client.print(",Heatpump_Air_Flow_Rate:");
-    client.print(HeatpumpAirFlowRate);
+    client.print(heatpumpAirFlowRate);
     // Log the Heatpump power pulses
     client.print(",Heatpump_Power_pulses:");
-    client.print(emonHeatpumpPowerPulses);
+    client.print(emonheatpumpPowerPulses);
     // Log the Heatpump rpm pulses
     client.print(",Heatpump_Rpm_pulses:");
-    client.print(emonHeatpumpRpmPulses);
+    client.print(emonheatpumpRpmPulses);
     // Log the DHT11 readings
     client.print(",dht11_humidity:");
     client.print(DHT11Humidity);
@@ -946,7 +934,7 @@ if  (HeatpumpAirFlowRate  < 0 ){
     client.print(MG811Voltage);
     // Log the Heat Cop-Eer Off = 1;
     client.print(",Heat_Cop_Eer_Off:");
-    client.print(HeatCopEerOff);
+    client.print(heatCOPEEROff);
 
     // Log the waterPulsesHistory
     for (byte i=((sizeof(waterPulsesHistory) / sizeof(int)) - 1); i > 0; i--) {
@@ -963,13 +951,15 @@ if  (HeatpumpAirFlowRate  < 0 ){
     } else {
       client.print("1");
     }
-     // Log the water state
+
+    // Log the water state
     client.print(",water_state:");
     if ( waterState == LOW ) {
       client.print("0");
     } else {
       client.print("1");
     }
+
     // Log the leak state
     client.print(",waterLeak_state:");
     if ( waterLeakState == true ) {
@@ -977,13 +967,15 @@ if  (HeatpumpAirFlowRate  < 0 ){
     } else {
       client.print("1");
     }
+
     // Log the leak state
     client.print(",showerWaterUse_state:");
-    if ( ShowerWaterUse == true ) {
+    if ( showerWaterUse == true ) {
       client.print("0");
     } else {
       client.print("1");
     }
+
     client.println("} HTTP/1.1");
     client.println("Host: 192.168.0.15");
     client.println("User-Agent: Arduino-ethernet");
@@ -1008,7 +1000,6 @@ void readSensors() {
   readMQ7();
   readMG811();
 }
-
 
 //
 // Read the DHT11 humidity & temperature sensor
@@ -1051,13 +1042,12 @@ void readMG811() {
   MG811CO2Level = pow(10,power);
 }
 
-
 //
 // Water use checks
 //
 void checkForWaterShutoff() {
   checkForWaterUse();
-  checkForShowerWaterUse();
+  checkForshowerWaterUse();
   checkForwaterLeak();
 }
 
@@ -1080,7 +1070,8 @@ void checkForWaterUse() {
       return;
     }
   }
- // Water leak - shut off water
+
+  // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
   waterState = LOW;
   waterLeakState = true;
@@ -1089,7 +1080,7 @@ void checkForWaterUse() {
 //
 // Check for excessive shower water use
 //
-void checkForShowerWaterUse() {
+void checkForshowerWaterUse() {
 }
 
 //
@@ -1114,7 +1105,7 @@ void checkForwaterLeak() {
   // Water leak - shut off water
   digitalWrite(WATER_STOP_VALVE_PIN, LOW);
   waterState = LOW;
-  ShowerWaterUse = true;
+  showerWaterUse = true;
 }
 
 //
@@ -1131,7 +1122,7 @@ void alarmWaterShutoff() {
 
     waterState = alarmState;
     waterLeakState = false;
-    ShowerWaterUse = false;
+    showerWaterUse = false;
 
     for (byte i=0; i < (sizeof(waterPulsesHistory) / sizeof(int)); i++) {
       waterPulsesHistory[i] = 0;
@@ -1158,29 +1149,27 @@ void incrementWaterPulses()
 // Increment the number of increment Heatpump Power Pulses
 // * Do not count more than one pulse per second, for example thunder will cause false pulses
 //
-void incrementHeatpumpPowerPulses()
+void incrementheatpumpPowerPulses()
 {
-  if ( (millis() - lastHeatpumpPowerPulses) > 1000 ) {
-    HeatpumpPowerPulses++;
+  if ( (millis() - lastheatpumpPowerPulses) > 1000 ) {
+    heatpumpPowerPulses++;
   }
 
-  lastHeatpumpPowerPulses = millis();
+  lastheatpumpPowerPulses = millis();
 }
 
 //
 // Increment the number of increment Heatpump Rpm Pulses
 // * Do not count more than 33 pulse per second, for example thunder will cause false pulses
 //
-void incrementHeatpumpRpmPulses()
+void incrementheatpumpRpmPulses()
 {
-  if ( (millis() - lastHeatpumpRpmPulses) > 20 ) {
-    HeatpumpRpmPulses++;
+  if ( (millis() - lastheatpumpRpmPulses) > 20 ) {
+    heatpumpRpmPulses++;
   }
 
-  lastHeatpumpRpmPulses = millis();
+  lastheatpumpRpmPulses = millis();
 }
-
-
 
 //
 // The most important thing of all, feed the watchdog
