@@ -109,24 +109,24 @@ struct owbus
 
 // and the array
 owbus owbuses[] = {
-  {owsensors0, DEVICE_DISCONNECTED, "fireplace", "Takkahuone"},             // Fireplace
-  {owsensors1, DEVICE_DISCONNECTED, "kitchen", "Keitti\xEF"},                // Kitchen
-  {owsensors2, DEVICE_DISCONNECTED, "utl_room", "Kodinhoitohuone"},          // Utility room
-  {owsensors3, DEVICE_DISCONNECTED, "bedroom", "Julian huone"},              // Bedroom
-  {owsensors4, DEVICE_DISCONNECTED, "master_bedroom", "Makuuhuone"},         // Master bedroom
-  {owsensors5, DEVICE_DISCONNECTED, "warehouse", "Varasto"},                 // Warehouse
-  {owsensors6, DEVICE_DISCONNECTED, "outdoor", "Ulkoilma"},                  // Outdoor air
-  {owsensors7, DEVICE_DISCONNECTED, "aircond_intake", "Imuilma \x7E ILP "},  // Carrier intake air
-  {owsensors8, DEVICE_DISCONNECTED, "aircond_out", "ILP \x7E puhallus"},     // Carrier outlet air
-  {owsensors9, DEVICE_DISCONNECTED, "aircond_hotpipe", "ILP kuumakaasu"},    // Carrier hot gas pipe
-  {owsensors10,DEVICE_DISCONNECTED, "boiler_mid", "Kuumavesivar.keski"},     // Hot water boiler middle
-  {owsensors11,DEVICE_DISCONNECTED, "boiler_top", "Kuumavesivar.yl\xE1"},    // Hot water boiler up
-  {owsensors12,DEVICE_DISCONNECTED, "hot_water", "Kuumavesi"},               // Hot water
-  {owsensors13,DEVICE_DISCONNECTED, "water", "Tuleva vesi"},                 // Cold Water
-  {owsensors14,DEVICE_DISCONNECTED, "vent_outdoor", "Ulkoilma \x7E LTO"},    // Ventilation machine fresh air in
-  {owsensors15,DEVICE_DISCONNECTED, "vent_fresh", "LTO l\xE1mmitt\xE1\xE1"}, // Ventilation machine fresh air out
-  {owsensors16,DEVICE_DISCONNECTED, "vent_dirty", "LTO \x7E sis\xE1ilma"},   // Ventilation machine waste air in
-  {owsensors17,DEVICE_DISCONNECTED, "vent_waste", "LTO \x7E poistoilma"}     // Ventilation machine waste air out
+  {owsensors0, DEVICE_DISCONNECTED_C, "fireplace", "Takkahuone"},             // Fireplace
+  {owsensors1, DEVICE_DISCONNECTED_C, "kitchen", "Keitti\xEF"},                // Kitchen
+  {owsensors2, DEVICE_DISCONNECTED_C, "utl_room", "Kodinhoitohuone"},          // Utility room
+  {owsensors3, DEVICE_DISCONNECTED_C, "bedroom", "Julian huone"},              // Bedroom
+  {owsensors4, DEVICE_DISCONNECTED_C, "master_bedroom", "Makuuhuone"},         // Master bedroom
+  {owsensors5, DEVICE_DISCONNECTED_C, "warehouse", "Varasto"},                 // Warehouse
+  {owsensors6, DEVICE_DISCONNECTED_C, "outdoor", "Ulkoilma"},                  // Outdoor air
+  {owsensors7, DEVICE_DISCONNECTED_C, "aircond_intake", "Imuilma \x7E ILP "},  // Carrier intake air
+  {owsensors8, DEVICE_DISCONNECTED_C, "aircond_out", "ILP \x7E puhallus"},     // Carrier outlet air
+  {owsensors9, DEVICE_DISCONNECTED_C, "aircond_hotpipe", "ILP kuumakaasu"},    // Carrier hot gas pipe
+  {owsensors10,DEVICE_DISCONNECTED_C, "boiler_mid", "Kuumavesivar.keski"},     // Hot water boiler middle
+  {owsensors11,DEVICE_DISCONNECTED_C, "boiler_top", "Kuumavesivar.yl\xE1"},    // Hot water boiler up
+  {owsensors12,DEVICE_DISCONNECTED_C, "hot_water", "Kuumavesi"},               // Hot water
+  {owsensors13,DEVICE_DISCONNECTED_C, "water", "Tuleva vesi"},                 // Cold Water
+  {owsensors14,DEVICE_DISCONNECTED_C, "vent_outdoor", "Ulkoilma \x7E LTO"},    // Ventilation machine fresh air in
+  {owsensors15,DEVICE_DISCONNECTED_C, "vent_fresh", "LTO l\xE1mmitt\xE1\xE1"}, // Ventilation machine fresh air out
+  {owsensors16,DEVICE_DISCONNECTED_C, "vent_dirty", "LTO \x7E sis\xE1ilma"},   // Ventilation machine waste air in
+  {owsensors17,DEVICE_DISCONNECTED_C, "vent_waste", "LTO \x7E poistoilma"}     // Ventilation machine waste air out
 };
 
 
@@ -149,7 +149,7 @@ CarrierHeatpump carrierHeatpump = { 2, 0, 19, false };
 
 // The Carrier heatpump instance, and the IRSender instance
 HeatpumpIR *heatpumpIR = new CarrierHeatpumpIR();
-IRSender irSender(IR_PIN); // IR led on Mega digital pin 9
+IRSenderPWM irSender(IR_PIN); // IR led on Mega digital pin 9
 
 // The number of the displayed sensor
 int displayedSensor = 0;
@@ -416,7 +416,7 @@ void updateDisplay()
 {
   // First show the temperature displays
   if ( displayedSensor < sizeof(owbuses) / sizeof(struct owbus) &&
-       owbuses[displayedSensor].temperature != DEVICE_DISCONNECTED) {
+       owbuses[displayedSensor].temperature != DEVICE_DISCONNECTED_C) {
     // Display the device name and temperature on the LCD
     lcd.clear();
     lcd.print(owbuses[displayedSensor].name);
@@ -1025,7 +1025,7 @@ if  (heatpumpAirFlowRate  < 0 ){
 
     // Log sensor temperatures
     for (int i=0; i < sizeof(owbuses) / sizeof(struct owbus); i++) {
-      if (owbuses[i].temperature != DEVICE_DISCONNECTED) {
+      if (owbuses[i].temperature != DEVICE_DISCONNECTED_C) {
         if (notFirst) {
           client.print(",");
         }
